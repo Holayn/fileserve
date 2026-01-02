@@ -69,6 +69,21 @@ app.use((req, res, next) => {
 });
 
 app.use('/', routes);
+
+app.use(
+  express.static(join(getDirname(import.meta.url), '../../web/dist'), {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.js')) {
+        res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+      }
+    },
+  }),
+);
+// Serve Vue app for all non-API routes
+app.get('*', (req: Request, res: Response) => {
+  res.sendFile(join(getDirname(import.meta.url), '../../web/dist/index.html'));
+});
+
 app.get('/health', (req: Request, res: Response) => {
   res.sendStatus(200);
 });
