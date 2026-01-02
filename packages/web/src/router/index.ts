@@ -7,7 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'share',
-      component: Share
+      component: Share,
     },
   ]
 })
