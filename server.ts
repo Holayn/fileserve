@@ -11,6 +11,7 @@ import routes from './src/routes/index.js';
 import { configureHbs } from './src/config/hbs.js';
 import { PORT } from './src/config/env.js';
 import { nonceGenerator, cspDirectives } from './src/middleware/security.js';
+import { closeDatabase } from './src/config/database.js';
 
 const app: Application = express();
 
@@ -100,6 +101,7 @@ const gracefulShutdown = (signal: string) => {
   process.on(signal, () => {
     logger.info(`${signal} signal received: closing server.`);
     server.close(() => {
+      closeDatabase();
       logger.info('Server closed.');
       process.exit(0);
     });

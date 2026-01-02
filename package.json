@@ -1,5 +1,5 @@
 {
-  "name": "node-server-boilerplate",
+  "name": "fileserve",
   "type": "module",
   "version": "1.0.0",
   "main": "index.js",
@@ -10,19 +10,31 @@
     "watch:build": "tsc -w",
     "watch:run": "nodemon --ext js,hbs,json --inspect dist/server.js",
     "dev": "concurrently \"npm:watch:build\" \"npm:watch:run\"",
+    "cli": "node dist/src/cli/index.js",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"
   },
   "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/fs-extra": "^11.0.4",
+    "@types/mime-types": "^3.0.1",
+    "@types/send": "^1.2.1",
+    "@types/yargs": "^17.0.35",
+    "better-sqlite3": "^12.5.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "fs-extra": "^11.3.3",
     "hbs": "^4.2.0",
     "helmet": "^4.6.0",
+    "mime-types": "^3.0.2",
     "morgan": "^1.10.0",
     "node-cron": "^4.2.1",
+    "send": "^1.2.1",
+    "uuid": "^13.0.0",
     "winston": "^3.18.3",
-    "winston-daily-rotate-file": "^4.7.1"
+    "winston-daily-rotate-file": "^4.7.1",
+    "yargs": "^18.0.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
