@@ -16,6 +16,10 @@ function getContentType(filePath: string): string {
   return lookup(filePath) || 'application/octet-stream';
 }
 
+function isViewableFile(contentType: string): boolean {
+  return contentType.startsWith('image/') || contentType.startsWith('video/');
+}
+
 router.get('/', (req: Request, res: Response) => {
   const { reference } = req.query as { reference: string };
 
@@ -31,10 +35,7 @@ router.get('/', (req: Request, res: Response) => {
   const files = getShareFiles(share.id);
 
   res.json({
-    share: {
-      name: share.name,
-      reference: share.reference,
-    },
+    name: share.name,
     files: files.map((file) => ({
       reference: file.reference,
       fileName: file.fileName,
@@ -83,11 +84,14 @@ router.get(
     }
 
     // Set appropriate headers
+    const contentType = getContentType(shareFile.filePath);
+    const disposition = isViewableFile(contentType) ? 'inline' : 'attachment';
+    
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${shareFile.fileName}"`,
+      `${disposition}; filename="${shareFile.fileName}"`,
     );
-    res.setHeader('Content-Type', getContentType(shareFile.filePath));
+    res.setHeader('Content-Type', contentType);
 
     // Stream the file using send library (handles range requests automatically)
     send(req, filePath)
