@@ -69,6 +69,16 @@ npm run cli add-file -r abc123 -f ./path/to/file.txt --name "Custom Name"
    npm run cli add-file -- -i 1 -f ./data.csv -n "Sales Data"
    ```
 
+## Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DB_PATH` | Path to where the database file will be stored | Required |
+| `PORT` | Server port | 3000 |
+
+
 ## Linting
 
 This project uses ESLint and Prettier for linting and formatting.
