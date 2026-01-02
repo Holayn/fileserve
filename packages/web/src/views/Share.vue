@@ -18,7 +18,7 @@
       };
     },
     created() {
-      const { reference } = this.$route.query;
+      const { share: reference } = this.$route.query;
       this.reference = reference as string;
     },
     async mounted() {
