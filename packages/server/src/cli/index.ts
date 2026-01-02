@@ -7,7 +7,7 @@ import {
   addFileToShare,
   getShareByReference,
   getShareById,
-} from '../config/database.js';
+} from '../repositories/share-repository.js';
 
 await yargs(hideBin(process.argv))
   .command(

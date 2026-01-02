@@ -3,7 +3,7 @@ import {
   getShareByReference,
   getShareFiles,
   getShareFileByReference,
-} from '../config/database.js';
+} from '../repositories/share-repository.js';
 import { getFileInfo } from '../util/fs.js';
 import { lookup } from 'mime-types';
 import { asyncHandler } from '../util/route.js';

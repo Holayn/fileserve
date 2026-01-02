@@ -1,5 +1,5 @@
 import { Share } from './share.js';
-import { getShareById } from '../config/database.js';
+import { getShareById } from '../repositories/share-repository.js';
 
 export class ShareFile {
   constructor(
