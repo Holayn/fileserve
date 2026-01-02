@@ -8,7 +8,6 @@ import { join } from 'path';
 import { getDirname } from './src/util/path.js';
 import logger from './src/util/logger.js';
 import routes from './src/routes/index.js';
-import { configureHbs } from './src/config/hbs.js';
 import { PORT } from './src/config/env.js';
 import { nonceGenerator, cspDirectives } from './src/middleware/security.js';
 import { closeDatabase } from './src/config/database.js';
@@ -68,8 +67,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
-configureHbs(app);
 
 app.use('/', routes);
 app.get('/health', (req: Request, res: Response) => {
