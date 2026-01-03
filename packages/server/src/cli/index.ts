@@ -1,6 +1,5 @@
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
-import fs from 'fs-extra';
 import { basename, resolve } from 'path';
 import {
   createShare,
@@ -100,30 +99,24 @@ await yargs(hideBin(process.argv))
           process.exit(1);
         }
 
-        // Resolve file path and check if file exists
         const filePath = resolve(argv['file-path']);
-        try {
-          await fs.lstat(filePath);
-        } catch (error) {
-          console.error(
-            'Error: File not accessible or does not exist:',
-            filePath,
-          );
-          process.exit(1);
-        }
 
         // Use custom name or default to original filename
         const fileName = argv.name || basename(filePath);
 
         // Add file to share
-        const fileRecord = addFileToShare(share.id, filePath, fileName);
+        const fileRecord = await addFileToShare(share.id, filePath, fileName);
 
         console.log(`File added successfully!`);
         console.log(`Share: ${share.name} (${share.reference})`);
         console.log(`File: ${fileName}`);
         console.log(`File Reference: ${fileRecord.reference}`);
-      } catch (error) {
-        console.error('Error adding file to share:', error);
+      } catch (error: any) {
+        if (error instanceof Error) {
+          console.error(error);
+        } else {
+          console.error('Error adding file to share:', error.message);
+        }
         process.exit(1);
       }
     },

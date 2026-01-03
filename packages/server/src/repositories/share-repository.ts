@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import fs from 'fs-extra';
 import { ShareFile } from '../models/share-file.js';
 import { Share } from '../models/share.js';
 import { db } from '../config/database.js';
@@ -30,11 +31,21 @@ export const createShare = (
   return { id: result.lastInsertRowid as number, reference, password };
 };
 
-export const addFileToShare = (
+export const addFileToShare = async (
   shareId: number,
   filePath: string,
   fileName: string,
-): { id: number; reference: string } => {
+): Promise<{ id: number; reference: string }> => {
+  // Verify file exists
+  try {
+    await fs.lstat(filePath);
+  } catch (error) {
+    throw {
+      message: 'File not accessible or does not exist',
+      filePath,
+    };
+  }
+
   const reference = randomUUID();
 
   const stmt = db.prepare(
