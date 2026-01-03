@@ -36,9 +36,20 @@ export const addFileToShare = async (
   filePath: string,
   fileName: string,
 ): Promise<{ id: number; reference: string }> => {
-  // Verify file exists
+  // Verify file exists and is accessible
   try {
-    await fs.lstat(filePath);
+    const stats = await fs.lstat(filePath);
+    
+    // Check if file is readable
+    await fs.access(filePath, fs.constants.R_OK);
+    
+    // Check if file is not a directory
+    if (!stats.isFile()) {
+      throw {
+        message: 'Path is a directory, not a file',
+        filePath,
+      };
+    }
   } catch (error) {
     throw {
       message: 'File not accessible or does not exist',
