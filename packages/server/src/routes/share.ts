@@ -21,7 +21,14 @@ function isViewableFile(contentType: string): boolean {
   return contentType.startsWith('image/') || contentType.startsWith('video/');
 }
 
-router.get('/', authShare, (req: Request, res: Response) => {
+router.get('/', 
+  authShare(
+    req => req.query.reference as string, 
+    (req, res) => {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  ), 
+  (req: Request, res: Response) => {
   const { reference } = req.query as { reference: string };
 
   if (!reference) {
@@ -71,7 +78,12 @@ router.post('/auth', (req: Request, res: Response) => {
 
 router.get(
   '/file',
-  authShare,
+  authShare(
+    req => req.query.share as string,
+    (req, res) => {
+      return res.redirect(`/?share=${req.query.share}`);
+    }
+  ),
   asyncHandler(async (req: Request, res: Response) => {
     const { reference, share: shareReference, download } = req.query as {
       reference: string;
