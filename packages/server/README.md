@@ -21,7 +21,7 @@ This project includes a command-line interface for managing shares and files.
 #### Create a Share
 Create a new share with a specified name:
 ```bash
-npm run cli create-share --name "My Share"
+npm run cli create-share -- --name "My Share"
 ```
 
 #### Add a File to a Share
@@ -29,17 +29,17 @@ Add a file to an existing share using either the share reference or ID:
 
 **Using share reference:**
 ```bash
-npm run cli add-file --share-reference abc123 --file-path ./path/to/file.txt
+npm run cli add-file -- --share-reference abc123 --file-path ./path/to/file.txt
 ```
 
 **Using share ID:**
 ```bash
-npm run cli add-file --share-id 1 --file-path ./path/to/file.txt
+npm run cli add-file -- --share-id 1 --file-path ./path/to/file.txt
 ```
 
 **With custom filename:**
 ```bash
-npm run cli add-file -r abc123 -f ./path/to/file.txt --name "Custom Name"
+npm run cli add-file -- --share-reference abc123 --file-path ./path/to/file.txt --name "Custom Name"
 ```
 
 ### CLI Options
