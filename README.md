@@ -2,6 +2,16 @@
 
 A very simple and modern file sharing application, built with Node.js, Express, Vue.js, and TypeScript. FileServe allows users to create secure shares with unique references and download files through an elegant web interface.
 
+## Features
+
+- Create secure shares with unique references
+- Resumable file downloads from shares
+- Viewable files are displayed inline
+
+## Motivation
+
+Wanted to build an extremely simple and secure file sharing application myself.
+
 ## Quick Start
 
 ### Prerequisites

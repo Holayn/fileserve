@@ -46,9 +46,10 @@ router.get('/', (req: Request, res: Response) => {
 router.get(
   '/file',
   asyncHandler(async (req: Request, res: Response) => {
-    const { reference, share: shareReference } = req.query as {
+    const { reference, share: shareReference, download } = req.query as {
       reference: string;
       share: string;
+      download: string;
     };
 
     if (!reference || !shareReference) {
@@ -85,7 +86,7 @@ router.get(
 
     // Set appropriate headers
     const contentType = getContentType(shareFile.filePath);
-    const disposition = isViewableFile(contentType) ? 'inline' : 'attachment';
+    const disposition = download ? 'attachment' : isViewableFile(contentType) ? 'inline' : 'attachment';
     
     res.setHeader(
       'Content-Disposition',
