@@ -34,7 +34,7 @@ npm install
 
 3. Set up environment variables:
 ```bash
-cp packages/server/.env.example packages/server/.env
+cp packages/server/sample.env packages/server/.env
 ```
 
 ## CLI Commands
