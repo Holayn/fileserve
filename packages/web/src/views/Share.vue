@@ -132,7 +132,7 @@
       <p class="text-gray-600">{{ share.files.length }} {{ share.files.length === 1 ? 'file' : 'files' }}</p>
     </div>
     
-    <div class="bg-white rounded-lg shadow-md border border-gray-200">
+    <div v-if="share.files.length" class="bg-white rounded-lg shadow-md border border-gray-200">
       <div class="divide-y divide-gray-200">
         <a v-for="file in share.files" :key="file.reference" 
            :href="`/api/share/file?reference=${file.reference}&share=${reference}`"
