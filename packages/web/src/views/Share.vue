@@ -1,11 +1,17 @@
 <script lang="ts">
+  import Plyr from 'plyr';
+  import 'plyr/dist/plyr.css';
+
   interface ShareData {
     name: string;
     reference: string;
-    files: Array<{
-      reference: string;
-      fileName: string;
-    }>;
+    files: Array<FileData>;
+  }
+
+  interface FileData {
+    reference: string;
+    fileName: string;
+    contentType: string;
   }
 
   const originalTitle = document.title;
@@ -24,6 +30,10 @@
         authErrorMessage: '',
         authShareName: '',
         password: '',
+
+        viewFile: null as FileData | null,
+        imageLoading: false,
+        videoLoading: false,
       };
     },
     created() {
@@ -107,7 +117,63 @@
         } finally {
           this.authLoading = false;
         }
-      }
+      },
+
+      getFileUrl(file: { reference: string; fileName: string }, download: boolean = false) {
+        return `/api/share/file?reference=${file.reference}&share=${this.reference}&download=${download}`;
+      },
+      isViewableImage(file: FileData) {
+        return file.contentType.startsWith('image/');
+      },
+      isViewableVideo(file: FileData) {
+        return file.contentType.includes('video/mp4');
+      },
+      async openPreview(file: FileData) {
+        this.viewFile = file;
+
+        // Reset loading state for images
+        if (this.isViewableImage(file)) {
+          this.imageLoading = true;
+        }
+        if (this.isViewableVideo(file)) {
+          this.videoLoading = true;
+        }
+        
+        const dialog = this.$refs.fileDialog as HTMLDialogElement;
+        if (dialog) {
+          dialog.showModal();
+
+          if (this.$refs.video) {
+            const player = new Plyr(this.$refs.video as HTMLVideoElement, {
+              controls: ['play-large', 'play', 'progress', 'current-time', 'settings', 'fullscreen'],
+            });
+            player.on('ready', () => {
+              this.videoLoading = false;
+              player.play();
+            });
+          }
+        }
+      },
+      onImageLoad() {
+        this.imageLoading = false;
+      },
+      // Helper in case Plyr doesn't trigger correctly or for standard video tags
+      onVideoLoad() {
+        this.videoLoading = false;
+      },
+      closePreview() {
+        const dialog = this.$refs.fileDialog as HTMLDialogElement;
+        if (dialog) {
+          dialog.close();
+        }
+        this.viewFile = null;
+        this.imageLoading = false;
+      },
+      handleBackdropClick(event: MouseEvent) {
+        if (event.target === this.$refs.fileDialog) {
+          this.closePreview();
+        }
+      },
     }
   }
 </script>
@@ -148,9 +214,10 @@
     
     <div v-if="share.files.length" class="bg-white rounded-lg shadow-md border border-gray-200">
       <div class="divide-y divide-gray-200">
-        <a v-for="file in share.files" :key="file.reference" 
-           :href="`/api/share/file?reference=${file.reference}&share=${reference}`"
-           class="flex items-center px-6 py-2 hover:bg-gray-50 transition-colors block">
+        <button v-for="file in share.files" :key="file.reference" 
+           class="w-full flex items-center px-6 py-2 hover:bg-gray-50 transition-colors text-left"
+           @click="openPreview(file)"
+        >
           <div class="flex-shrink-0 mr-4">
             <svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
@@ -166,10 +233,62 @@
               <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
             </a>
           </div>
-        </a>
+        </button>
       </div>
     </div>
   </div>
+
+  <dialog 
+    ref="fileDialog" 
+    class="backdrop:bg-black/75 w-fit min-w-[50vw] min-h-[50vh] max-w-[calc(100vw-2rem)] md:max-w-[90vw] rounded-lg shadow-2xl p-0"
+    @close="viewFile = null"
+    @click="handleBackdropClick"
+  >
+    <div v-if="viewFile" class="flex flex-col h-full max-h-[90vh]">
+      <div class="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
+        <h3 class="font-bold text-lg truncate">{{ viewFile.fileName }}</h3>
+        <button @click="closePreview" class="p-2 hover:bg-gray-100 rounded-full">
+          <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+      </div>
+
+      <div class="relative p-6 overflow-auto flex flex-col items-center justify-center min-h-[300px]">
+        <div v-if="imageLoading || videoLoading" class="absolute flex flex-col items-center justify-center z-20">
+          <div>Loading...</div>
+        </div>
+
+        <template v-if="isViewableImage(viewFile)">
+          <img :src="getFileUrl(viewFile)" class="max-w-full max-h-[70vh] transition-opacity duration-300" :class="imageLoading ? 'opacity-0' : 'opacity-100'" @load="onImageLoad">
+        </template>
+        
+        <template v-else-if="isViewableVideo(viewFile)">
+          <video 
+            ref="video" 
+            controls 
+            :src="getFileUrl(viewFile)" 
+            class="max-w-full max-h-[70vh] transition-opacity duration-300"
+            :class="videoLoading ? 'opacity-0' : 'opacity-100'"
+            @loadeddata="onVideoLoad"
+          ></video>
+        </template>
+
+        <div v-else class="text-center py-12">
+          <div class="bg-gray-200 p-6 rounded-full inline-block mb-4">
+            <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-width="2"></path></svg>
+          </div>
+          <p class="text-gray-600 font-medium">No preview available</p>
+        </div>
+      </div>
+
+      <div class="p-4 border-t flex justify-center gap-3 bg-white">
+        <a :href="getFileUrl(viewFile, true)" 
+            class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium flex items-center gap-2">
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
+          Download
+        </a>
+      </div>
+    </div>
+  </dialog>
 </template>
 
 <style scoped>

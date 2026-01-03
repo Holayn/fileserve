@@ -9,6 +9,7 @@ import { generateHash } from '../util/security.js';
 interface ShareFileListResult {
   reference: string;
   file_name: string;
+  file_path: string;
 }
 
 interface ShareFileDBResult {
@@ -88,6 +89,7 @@ export const getShareFiles = (shareId: number) => {
   return results.map((result) => ({
     reference: result.reference,
     fileName: result.file_name,
+    filePath: result.file_path,
   }));
 };
 

@@ -51,6 +51,7 @@ router.get('/',
     files: files.map((file) => ({
       reference: file.reference,
       fileName: file.fileName,
+      contentType: getContentType(file.filePath),
     })),
   });
 });
