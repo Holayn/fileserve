@@ -6,6 +6,7 @@ import {
   addFileToShare,
   getShareByReference,
   getShareById,
+  updateSharePassword,
 } from '../repositories/share-repository.js';
 
 await yargs(hideBin(process.argv))
@@ -117,6 +118,72 @@ await yargs(hideBin(process.argv))
         } else {
           console.error('Error adding file to share:', error.message);
         }
+        process.exit(1);
+      }
+    },
+  )
+  .command(
+    'update-password',
+    'Update password for an existing share',
+    (yargs) => {
+      return yargs
+        .option('share-reference', {
+          alias: 'r',
+          describe: 'Reference of the share',
+          type: 'string',
+        })
+        .option('share-id', {
+          alias: 'i',
+          describe: 'ID of the share',
+          type: 'string',
+        })
+        .option('password', {
+          alias: 'p',
+          describe: 'New password for the share (omit to remove password)',
+          type: 'string',
+        });
+    },
+    (argv) => {
+      try {
+        if (!argv['share-reference'] && !argv['share-id']) {
+          console.error(
+            'Error: Either share reference (--share-reference/-r) or share ID (--share-id/-i) is required',
+          );
+          process.exit(1);
+        }
+
+        if (argv['share-reference'] && argv['share-id']) {
+          console.error(
+            'Error: Provide either share reference or share ID, not both',
+          );
+          process.exit(1);
+        }
+
+        // Check if share exists
+        const share = argv['share-reference']
+          ? getShareByReference(argv['share-reference'])
+          : getShareById(parseInt(argv['share-id']!));
+
+        if (!share) {
+          console.error('Error: Share not found');
+          process.exit(1);
+        }
+
+        // Update password
+        const success = updateSharePassword(share.id, argv.password || null);
+
+        if (!success) {
+          console.error('Error: Failed to update password');
+          process.exit(1);
+        }
+
+        if (argv.password) {
+          console.log(`Password updated successfully for share: ${share.name} (${share.reference})`);
+        } else {
+          console.log(`Password removed successfully for share: ${share.name} (${share.reference})`);
+        }
+      } catch (error) {
+        console.error('Error updating password:', error);
         process.exit(1);
       }
     },

@@ -105,3 +105,9 @@ export const getShareById = (id: number): Share | undefined => {
     ? new Share(result.id, result.name, result.password, result.reference)
     : undefined;
 };
+
+export const updateSharePassword = (id: number, password: string | null): boolean => {
+  const stmt = db.prepare('UPDATE share SET password = ? WHERE id = ?');
+  const result = stmt.run(password ? generateHash(password) : null, id);
+  return result.changes > 0;
+};

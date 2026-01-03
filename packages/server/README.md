@@ -42,15 +42,37 @@ npm run cli add-file -- --share-id 1 --file-path ./path/to/file.txt
 npm run cli add-file -- --share-reference abc123 --file-path ./path/to/file.txt --name "Custom Name"
 ```
 
+#### Update Share Password
+Update or remove the password for an existing share:
+
+**Set a new password:**
+```bash
+npm run cli update-password -- --share-reference abc123 --password "newpassword"
+```
+
+**Remove password (make share public):**
+```bash
+npm run cli update-password -- --share-reference abc123
+```
+
+**Using share ID instead of reference:**
+```bash
+npm run cli update-password -- --share-id 1 --password "newpassword"
+```
+
 ### CLI Options
 
 | Command | Option | Alias | Description | Required |
 |---------|--------|-------|-------------|---------|
 | `create-share` | `--name` | `-n` | Name of the share | Yes |
+| `create-share` | `--password` | `-p` | Password for the share | No |
 | `add-file` | `--share-reference` | `-r` | Reference of the share | Either this or `--share-id` |
 | `add-file` | `--share-id` | `-i` | ID of the share | Either this or `--share-reference` |
 | `add-file` | `--file-path` | `-f` | Path to the file to add | Yes |
 | `add-file` | `--name` | `-n` | Custom name for the file | No |
+| `update-password` | `--share-reference` | `-r` | Reference of the share | Either this or `--share-id` |
+| `update-password` | `--share-id` | `-i` | ID of the share | Either this or `--share-reference` |
+| `update-password` | `--password` | `-p` | New password for the share | No |
 
 ### Examples
 
