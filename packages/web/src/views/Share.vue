@@ -22,6 +22,7 @@
         authError: false,
         authLoading: false,
         authErrorMessage: '',
+        authShareName: '',
         password: '',
       };
     },
@@ -58,6 +59,9 @@
           } else {
             if (res.status === 401) {
               this.needsAuth = true;
+
+              const data = await res.json();
+              this.authShareName = data.name;
             } else {
               this.loadShareError = true;
             }
@@ -69,6 +73,10 @@
         }
       },
       async submitAuth() {
+        if (this.authLoading) {
+          return;
+        }
+
         this.authLoading = true;
         this.authError = false;
         this.authErrorMessage = '';
@@ -111,17 +119,23 @@
   <div v-else-if="loadShareError" class="flex items-center justify-center min-h-screen">
     <div class="text-red-500">Error loading files</div>
   </div>
-  <div v-else-if="needsAuth" class="flex items-center justify-center min-h-screen">
-    <form @submit.prevent="submitAuth">
-      <label for="password">Password</label>
-      <input v-model="password" class="w-64 block border border-gray-300 rounded px-2 py-1" type="password" required>
-      <button class="mt-2 w-full block border border-gray-300 rounded px-2 py-1 bg-blue-500 text-white" type="submit">
-        {{ authLoading ? 'loading...' : 'Submit' }}
-      </button>
-      <div v-if="authError" class="text-red-500">
-        {{ authErrorMessage }}
-      </div>
-    </form>
+  <div v-else-if="needsAuth" class="flex flex-col items-center justify-center min-h-screen px-4">
+    <h1 v-if="authShareName" class="text-3xl font-bold text-gray-800 mb-2 text-center">{{ authShareName }}</h1>
+    <div class="max-w-full">
+      <form @submit.prevent="submitAuth">
+        <label for="password" class="sr-only">Password</label>
+        <input v-model="password" class="w-64 max-w-full block border border-gray-300 rounded px-2 py-2" type="password" required placeholder="Password">
+        <button class="mt-2 w-full block border border-gray-300 rounded-md px-2 py-2 bg-blue-500 text-white" type="submit">
+          <div v-if="authLoading">Loading...</div>
+          <div v-else class="flex justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+          </div>
+        </button>
+        <div v-if="authError" class="text-red-500">
+          {{ authErrorMessage }}
+        </div>
+      </form>
+    </div>
   </div>
   <div v-else-if="!share" class="flex items-center justify-center min-h-screen">
     <div>Share not found</div>

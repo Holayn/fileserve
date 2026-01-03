@@ -25,7 +25,11 @@ router.get('/',
   authShare(
     req => req.query.reference as string, 
     (req, res) => {
-      return res.status(401).json({ error: 'Unauthorized' });
+      const share = getShareByReference(req.query.reference as string);
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        name: share?.name ?? 'Unknown share',
+      });
     }
   ), 
   (req: Request, res: Response) => {
