@@ -9,6 +9,7 @@ import { lookup } from 'mime-types';
 import { asyncHandler } from '../util/route.js';
 import logger from '../util/logger.js';
 import send from 'send';
+import { authShare } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ function isViewableFile(contentType: string): boolean {
   return contentType.startsWith('image/') || contentType.startsWith('video/');
 }
 
-router.get('/', (req: Request, res: Response) => {
+router.get('/', authShare, (req: Request, res: Response) => {
   const { reference } = req.query as { reference: string };
 
   if (!reference) {
@@ -43,8 +44,34 @@ router.get('/', (req: Request, res: Response) => {
   });
 });
 
+router.post('/auth', (req: Request, res: Response) => {
+  const { reference, password } = req.body as { reference: string; password: string };
+
+  if (!reference || !password) {
+    return res.status(400).json({ error: 'Missing required parameters' });
+  }
+
+  const share = getShareByReference(reference);
+  if (!share) {
+    return res.status(404).json({ error: 'Share not found' });
+  }
+
+  if (!share.validatePassword(password)) {
+    return res.status(401).json({ error: 'Invalid password' });
+  }
+
+  res.cookie(`auth---${share.reference}`, share.getAuthToken(), { 
+    httpOnly: true, 
+    sameSite: 'strict', 
+    secure: process.env.ENV !== 'development',
+  });
+
+  res.sendStatus(200);
+});
+
 router.get(
   '/file',
+  authShare,
   asyncHandler(async (req: Request, res: Response) => {
     const { reference, share: shareReference, download } = req.query as {
       reference: string;

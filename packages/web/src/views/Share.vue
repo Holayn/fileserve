@@ -16,40 +16,115 @@
       return {
         reference: '',
         share: null as ShareData | null,
-        loading: true,
+        loadingShare: false,
+        loadShareError: false,
+        needsAuth: false,
+        authError: false,
+        authLoading: false,
+        authErrorMessage: '',
+        password: '',
       };
     },
     created() {
       const { share: reference } = this.$route.query;
       this.reference = reference as string;
     },
-    async mounted() {
-      if (!this.reference) {
-        this.loading = false;
-        return;
-      }
-      await fetch(`/api/share?reference=${this.reference}`)
-        .then((response) => response.json())
-        .then((data) => {
-          this.share = data;
-          if (data.name) {
-            document.title = `${data.name} - ${originalTitle}`;
-          }
-        });
-      this.loading = false;
+    mounted() {
+      this.loadShare();
     },
     beforeDestroy() {
       document.title = originalTitle;
     },
+    methods: {
+      async loadShare() {
+        this.loadShareError = false;
+        this.needsAuth = false;
+
+        if (!this.reference) {
+          this.loadingShare = false;
+          return;
+        }
+
+        this.loadingShare = true;
+
+        try {
+          const res = await fetch(`/api/share?reference=${this.reference}`);
+          if (res.ok) {
+            const data = await res.json();
+            this.share = data;
+            if (data.name) {
+              document.title = `${data.name} - ${originalTitle}`;
+            }
+          } else {
+            if (res.status === 401) {
+              this.needsAuth = true;
+            } else {
+              this.loadShareError = true;
+            }
+          }
+        } catch (error) {
+          this.loadShareError = true;
+        } finally {
+          this.loadingShare = false;
+        }
+      },
+      async submitAuth() {
+        this.authLoading = true;
+        this.authError = false;
+        this.authErrorMessage = '';
+
+        try {
+          const res = await fetch(`/api/share/auth`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ reference: this.reference, password: this.password }),
+          });
+          if (res.ok) {
+            this.needsAuth = false;
+            this.loadShare();
+          } else {
+            this.authError = true;
+
+            if (res.status === 401) {
+              this.authErrorMessage = 'Invalid password';
+            } else {
+              this.authErrorMessage = 'Failed to authenticate';
+            }
+          }
+        } catch (error) {
+          this.authError = true;
+          this.authErrorMessage = 'Failed to authenticate';
+        } finally {
+          this.authLoading = false;
+        }
+      }
+    }
   }
 </script>
 
 <template>
-  <div v-if="loading" class="flex items-center justify-center min-h-screen">
+  <div v-if="loadingShare" class="flex items-center justify-center min-h-screen">
     <div class="text-gray-500">Loading...</div>
   </div>
+  <div v-else-if="loadShareError" class="flex items-center justify-center min-h-screen">
+    <div class="text-red-500">Error loading files</div>
+  </div>
+  <div v-else-if="needsAuth" class="flex items-center justify-center min-h-screen">
+    <form @submit.prevent="submitAuth">
+      <label for="password">Password</label>
+      <input v-model="password" class="w-64 block border border-gray-300 rounded px-2 py-1" type="password" required>
+      <button class="mt-2 w-full block border border-gray-300 rounded px-2 py-1 bg-blue-500 text-white" type="submit">
+        {{ authLoading ? 'loading...' : 'Submit' }}
+      </button>
+      <div v-if="authError" class="text-red-500">
+        {{ authErrorMessage }}
+      </div>
+    </form>
+  </div>
   <div v-else-if="!share" class="flex items-center justify-center min-h-screen">
-    <div class="text-red-500">Share not found</div>
+    <div>Share not found</div>
   </div>
   <div v-else class="container mx-auto px-4 py-8 max-w-4xl">
     <div class="mb-8">

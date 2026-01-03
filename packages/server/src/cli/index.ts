@@ -14,12 +14,18 @@ await yargs(hideBin(process.argv))
     'create-share',
     'Create a new share',
     (yargs) => {
-      return yargs.option('name', {
-        alias: 'n',
-        describe: 'Name of the share',
-        type: 'string',
-        demandOption: true,
-      });
+      return yargs
+        .option('name', {
+          alias: 'n',
+          describe: 'Name of the share',
+          type: 'string',
+          demandOption: true,
+        })
+        .option('password', {
+          alias: 'p',
+          describe: 'Password for the share',
+          type: 'string',
+        });
     },
     (argv) => {
       try {
@@ -28,7 +34,7 @@ await yargs(hideBin(process.argv))
           process.exit(1);
         }
 
-        const share = createShare(argv.name);
+        const share = createShare(argv.name, argv.password || null);
         console.log(`Share created successfully!`);
         console.log(`Name: ${argv.name}`);
         console.log(`Reference: ${share.reference}`);

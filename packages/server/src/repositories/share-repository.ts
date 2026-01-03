@@ -3,6 +3,7 @@ import { ShareFile } from '../models/share-file.js';
 import { Share } from '../models/share.js';
 import { db } from '../config/database.js';
 import { posix } from 'path';
+import { generateHash } from '../util/security.js';
 
 interface ShareFileListResult {
   reference: string;
@@ -19,13 +20,14 @@ interface ShareFileDBResult {
 
 export const createShare = (
   name: string,
-): { id: number; reference: string } => {
+  password: string | null,
+): { id: number; reference: string, password: string | null } => {
   const reference = randomUUID();
 
-  const stmt = db.prepare('INSERT INTO share (name, reference) VALUES (?, ?)');
-  const result = stmt.run(name, reference);
+  const stmt = db.prepare('INSERT INTO share (name, reference, password) VALUES (?, ?, ?)');
+  const result = stmt.run(name, reference, password ? generateHash(password) : null);
 
-  return { id: result.lastInsertRowid as number, reference };
+  return { id: result.lastInsertRowid as number, reference, password };
 };
 
 export const addFileToShare = (
@@ -50,9 +52,10 @@ export const addFileToShare = (
 
 export const getShareByReference = (reference: string) => {
   const stmt = db.prepare('SELECT * FROM share WHERE reference = ?');
-  return stmt.get(reference) as
-    | { id: number; name: string; reference: string }
-    | undefined;
+  const result = stmt.get(reference) as { id: number; name: string; password: string | null; reference: string } | undefined;
+  return result
+    ? new Share(result.id, result.name, result.password, result.reference)
+    : undefined;
 };
 
 export const getShareFiles = (shareId: number) => {
@@ -86,10 +89,8 @@ export const getShareFileByReference = (
 
 export const getShareById = (id: number): Share | undefined => {
   const stmt = db.prepare('SELECT * FROM share WHERE id = ?');
-  const result = stmt.get(id) as
-    | { id: number; name: string; reference: string }
-    | undefined;
+  const result = stmt.get(id) as { id: number; name: string; password: string | null; reference: string } | undefined;
   return result
-    ? new Share(result.id, result.name, result.reference)
+    ? new Share(result.id, result.name, result.password, result.reference)
     : undefined;
 };
