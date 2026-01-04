@@ -194,7 +194,7 @@
     <div class="text-red-500">Error loading files</div>
   </div>
   <div v-else-if="needsAuth" class="flex flex-col items-center justify-center min-h-screen px-4">
-    <h1 v-if="authShareName" class="text-3xl font-bold text-gray-800 mb-2 text-center">{{ authShareName }}</h1>
+    <h1 v-if="authShareName" class="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-2 text-center">{{ authShareName }}</h1>
     <div class="max-w-full">
       <form @submit.prevent="submitAuth">
         <label for="password" class="sr-only">Password</label>
@@ -216,14 +216,14 @@
   </div>
   <div v-else class="container mx-auto px-4 py-8 max-w-4xl">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ share.name }}</h1>
-      <p class="text-gray-600">{{ share.files.length }} {{ share.files.length === 1 ? 'file' : 'files' }}</p>
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-2">{{ share.name }}</h1>
+      <p class="text-gray-600 dark:text-gray-400">{{ share.files.length }} {{ share.files.length === 1 ? 'file' : 'files' }}</p>
     </div>
     
-    <div v-if="share.files.length" class="bg-white rounded-lg shadow-md border border-gray-200">
-      <div class="divide-y divide-gray-200">
+    <div v-if="share.files.length" class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+      <div class="divide-y divide-gray-200 dark:divide-gray-700">
         <button v-for="file in share.files" :key="file.reference" 
-           class="w-full flex items-center px-6 py-2 hover:bg-gray-50 transition-colors text-left"
+           class="w-full flex items-center px-6 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
            @click="openPreview(file)"
         >
           <div class="flex-shrink-0 mr-4 text-blue-500">
@@ -243,8 +243,8 @@
             </span>
           </div>
           <div>
-            <a class="block border border-gray-200 rounded-full p-1 hover:bg-gray-200" :href="`/api/share/file?reference=${file.reference}&share=${reference}&download=true`">
-              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
+            <a class="block border border-gray-200 dark:border-gray-600 rounded-full p-1 text-gray-500 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500" :href="`/api/share/file?reference=${file.reference}&share=${reference}&download=true`">
+              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
             </a>
           </div>
         </button>
@@ -254,19 +254,19 @@
 
   <dialog 
     ref="fileDialog" 
-    class="backdrop:bg-black/75 w-fit min-w-[50vw] h-screen max-w-[calc(100vw-1rem)] md:max-w-[90vw] rounded-lg shadow-2xl p-0"
+    class="backdrop:bg-black/75 w-fit min-w-[50vw] h-screen max-w-[calc(100vw-1rem)] md:max-w-[90vw] rounded-lg shadow-2xl p-0 dark:text-gray-200"
     @close="viewFile = null"
     @click="handleBackdropClick"
   >
     <div v-if="viewFile" class="flex flex-col h-full">
-      <div class="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
-        <h3 class="font-bold text-lg truncate">{{ viewFile.fileName }}</h3>
-        <button @click="closePreview" class="p-2 hover:bg-gray-100 rounded-full">
+      <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 sticky top-0 z-10">
+        <h3 class="font-bold text-lg truncate dark:text-gray-200">{{ viewFile.fileName }}</h3>
+        <button @click="closePreview" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
           <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         </button>
       </div>
 
-      <div class="relative p-1 lg:p-6 flex-1 min-h-0 overflow-auto flex flex-col items-center justify-center xmin-h-[300px]">
+      <div class="relative p-1 lg:p-6 flex-1 min-h-0 overflow-auto flex flex-col items-center justify-center dark:bg-gray-800">
         <div v-if="mediaLoading" class="absolute flex flex-col items-center justify-center z-20">
           <div>Loading...</div>
         </div>
@@ -295,7 +295,7 @@
         </div>
       </div>
 
-      <div class="p-4 border-t flex justify-center gap-3 bg-white">
+      <div class="p-4 border-t dark:border-gray-700 flex justify-center gap-3 bg-white dark:bg-gray-800">
         <a :href="getFileUrl(viewFile, true)" 
             class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium flex items-center gap-2">
           <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
