@@ -5,7 +5,7 @@ A very simple and modern file sharing application, built with Node.js, Express, 
 ## Features
 
 - Create secure shares with unique references
-- Resumable file downloads from shares
+- Resumable file downloads
 - Viewable files are displayed inline
 
 ## Motivation

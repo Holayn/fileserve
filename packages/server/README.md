@@ -42,6 +42,12 @@ npm run cli add-file -- --share-id 1 --file-path ./path/to/file.txt
 npm run cli add-file -- --share-reference abc123 --file-path ./path/to/file.txt --name "Custom Name"
 ```
 
+#### Generate File Previews
+Generate previews for all files that need them in a share:
+```bash
+npm run cli generate-preview -- --share-id 1
+```
+
 #### Update Share Password
 Update or remove the password for an existing share:
 
@@ -70,6 +76,8 @@ npm run cli update-password -- --share-id 1 --password "newpassword"
 | `add-file` | `--share-id` | `-i` | ID of the share | Either this or `--share-reference` |
 | `add-file` | `--file-path` | `-f` | Path to the file to add | Yes |
 | `add-file` | `--name` | `-n` | Custom name for the file | No |
+| `generate-preview` | `--share-reference` | `-r` | Reference of the share | Either this or `--share-id` |
+| `generate-preview` | `--share-id` | `-i` | ID of the share | Either this or `--share-reference` |
 | `update-password` | `--share-reference` | `-r` | Reference of the share | Either this or `--share-id` |
 | `update-password` | `--share-id` | `-i` | ID of the share | Either this or `--share-reference` |
 | `update-password` | `--password` | `-p` | New password for the share | No |
@@ -98,6 +106,7 @@ npm run cli update-password -- --share-id 1 --password "newpassword"
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DB_PATH` | Path to where the database file will be stored | Required |
+| `PREVIEWS_PATH` | Path to where the previews will be stored | Required |
 | `PORT` | Server port | 3000 |
 
 

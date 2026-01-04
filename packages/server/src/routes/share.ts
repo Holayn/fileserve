@@ -5,21 +5,13 @@ import {
   getShareFileByReference,
 } from '../repositories/share-repository.js';
 import { getFileInfo } from '../util/fs.js';
-import { lookup } from 'mime-types';
 import { asyncHandler } from '../util/route.js';
 import logger from '../util/logger.js';
 import send from 'send';
 import { authShare } from '../middleware/auth.js';
+import { isFileNeedsPreview, getFilePreviewPath, getContentType } from '../util/file.js';
 
 const router = Router();
-
-function getContentType(filePath: string): string {
-  return lookup(filePath) || 'application/octet-stream';
-}
-
-function isViewableFile(contentType: string): boolean {
-  return contentType.startsWith('image/') || contentType.startsWith('video/');
-}
 
 router.get('/', 
   authShare(
@@ -90,10 +82,9 @@ router.get(
     }
   ),
   asyncHandler(async (req: Request, res: Response) => {
-    const { reference, share: shareReference, download } = req.query as {
+    const { reference, share: shareReference } = req.query as {
       reference: string;
       share: string;
-      download: string;
     };
 
     if (!reference || !shareReference) {
@@ -116,7 +107,6 @@ router.get(
       return res.status(403).json({ error: 'Invalid share reference' });
     }
 
-    // Check if file exists on disk and handle symlinks
     let filePath: string;
     try {
       const fileInfo = await getFileInfo(shareFile.filePath);
@@ -130,7 +120,87 @@ router.get(
 
     // Set appropriate headers
     const contentType = getContentType(shareFile.filePath);
-    const disposition = download ? 'attachment' : isViewableFile(contentType) ? 'inline' : 'attachment';
+    const disposition = 'attachment';
+    
+    res.setHeader(
+      'Content-Disposition',
+      `${disposition}; filename="${shareFile.fileName}"`,
+    );
+    res.setHeader('Content-Type', contentType);
+
+    // Stream the file using send library (handles range requests automatically)
+    send(req, filePath)
+      .on('error', (error: Error) => {
+        logger.error(`Error streaming file: ${filePath}`, error);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Error streaming file' });
+        }
+      })
+      .pipe(res);
+  }),
+);
+
+router.get(
+  '/file/preview',
+  authShare(
+    req => req.query.share as string,
+    (req, res) => {
+      return res.redirect(`/?share=${req.query.share}`);
+    }
+  ),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { reference, share: shareReference } = req.query as {
+      reference: string;
+      share: string;
+    };
+
+    if (!reference || !shareReference) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    // Get file info and validate share reference
+    const shareFile = getShareFileByReference(reference);
+    if (!shareFile) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const share = getShareByReference(shareReference);
+    if (!share) {
+      return res.status(404).json({ error: 'Share not found' });
+    }
+
+    // Validate that the share reference matches
+    if (share.reference !== shareReference) {
+      return res.status(403).json({ error: 'Invalid share reference' });
+    }
+
+    let filePath: string;
+    try {
+      const fileInfo = await getFileInfo(shareFile.filePath);
+      filePath = fileInfo.path;
+      if (!fileInfo.isFile) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+    } catch (error) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    if (await isFileNeedsPreview(filePath)) {
+      try {
+        const previewPath = getFilePreviewPath(shareFile.filePath);
+        const fileInfo = await getFileInfo(previewPath);
+        filePath = fileInfo.path;
+        if (!fileInfo.isFile) {
+          return res.status(404).json({ error: 'File not found' });
+        }
+      } catch (error) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+    }
+
+    // Set appropriate headers
+    const contentType = getContentType(shareFile.filePath);
+    const disposition = 'inline';
     
     res.setHeader(
       'Content-Disposition',

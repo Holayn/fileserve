@@ -5,8 +5,11 @@ import { Share } from '../models/share.js';
 import { db } from '../config/database.js';
 import { posix } from 'path';
 import { generateHash } from '../util/security.js';
+import { isFileNeedsPreview, getFilePreviewPath } from '../util/file.js';
 
 interface ShareFileListResult {
+  id: number;
+  share_id: number;
   reference: string;
   file_name: string;
   file_path: string;
@@ -36,7 +39,7 @@ export const addFileToShare = async (
   shareId: number,
   filePath: string,
   fileName: string,
-): Promise<{ id: number; reference: string }> => {
+): Promise<{ record: { id: number; reference: string }; needsPreview: boolean }> => {
   // Verify file exists and is accessible
   try {
     const stats = await fs.lstat(filePath);
@@ -70,7 +73,13 @@ export const addFileToShare = async (
     reference,
   );
 
-  return { id: result.lastInsertRowid as number, reference };
+  return { 
+    record: {
+      id: result.lastInsertRowid as number,
+      reference,
+    },
+    needsPreview: await isFileNeedsPreview(filePath),
+  };
 };
 
 export const getShareByReference = (reference: string) => {
@@ -86,11 +95,13 @@ export const getShareFiles = (shareId: number) => {
     'SELECT id, share_id, file_path, file_name, reference FROM share_file WHERE share_id = ?',
   );
   const results = stmt.all(shareId);
-  return results.map((result) => ({
-    reference: result.reference,
-    fileName: result.file_name,
-    filePath: result.file_path,
-  }));
+  return results.map((result) => (new ShareFile(
+    result.id,
+    result.share_id,
+    result.file_path,
+    result.file_name,
+    result.reference,
+  )));
 };
 
 export const getShareFileByReference = (

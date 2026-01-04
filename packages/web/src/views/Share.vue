@@ -32,8 +32,8 @@
         password: '',
 
         viewFile: null as FileData | null,
-        imageLoading: false,
-        videoLoading: false,
+        mediaLoading: false,
+        mediaLoadError: false,
       };
     },
     created() {
@@ -120,7 +120,10 @@
       },
 
       getFileUrl(file: { reference: string; fileName: string }, download: boolean = false) {
-        return `/api/share/file?reference=${file.reference}&share=${this.reference}&download=${download}`;
+        if (download) {
+          return `/api/share/file?reference=${file.reference}&share=${this.reference}`;
+        }
+        return `/api/share/file/preview?reference=${file.reference}&share=${this.reference}`;
       },
       isViewableImage(file: FileData) {
         return file.contentType.startsWith('image/');
@@ -130,13 +133,14 @@
       },
       async openPreview(file: FileData) {
         this.viewFile = file;
+        this.mediaLoadError = false;
 
         // Reset loading state for images
         if (this.isViewableImage(file)) {
-          this.imageLoading = true;
+          this.mediaLoading = true;
         }
         if (this.isViewableVideo(file)) {
-          this.videoLoading = true;
+          this.mediaLoading = true;
         }
         
         const dialog = this.$refs.fileDialog as HTMLDialogElement;
@@ -148,18 +152,26 @@
               controls: ['play-large', 'play', 'progress', 'current-time', 'settings', 'fullscreen'],
             });
             player.on('ready', () => {
-              this.videoLoading = false;
+              this.mediaLoading = false;
               player.play();
             });
           }
         }
       },
       onImageLoad() {
-        this.imageLoading = false;
+        this.mediaLoading = false;
+      },
+      onImageLoadError() {
+        this.mediaLoading = false;
+        this.mediaLoadError = true;
       },
       // Helper in case Plyr doesn't trigger correctly or for standard video tags
       onVideoLoad() {
-        this.videoLoading = false;
+        this.mediaLoading = false;
+      },
+      onVideoLoadError() {
+        this.mediaLoading = false;
+        this.mediaLoadError = true;
       },
       closePreview() {
         const dialog = this.$refs.fileDialog as HTMLDialogElement;
@@ -167,7 +179,7 @@
           dialog.close();
         }
         this.viewFile = null;
-        this.imageLoading = false;
+        this.mediaLoading = false;
       },
       handleBackdropClick(event: MouseEvent) {
         if (event.target === this.$refs.fileDialog) {
@@ -240,11 +252,11 @@
 
   <dialog 
     ref="fileDialog" 
-    class="backdrop:bg-black/75 w-fit min-w-[50vw] min-h-[50vh] max-w-[calc(100vw-2rem)] md:max-w-[90vw] rounded-lg shadow-2xl p-0"
+    class="backdrop:bg-black/75 w-fit min-w-[50vw] h-screen max-w-[calc(100vw-1rem)] md:max-w-[90vw] rounded-lg shadow-2xl p-0"
     @close="viewFile = null"
     @click="handleBackdropClick"
   >
-    <div v-if="viewFile" class="flex flex-col h-full max-h-[90vh]">
+    <div v-if="viewFile" class="flex flex-col h-full">
       <div class="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
         <h3 class="font-bold text-lg truncate">{{ viewFile.fileName }}</h3>
         <button @click="closePreview" class="p-2 hover:bg-gray-100 rounded-full">
@@ -252,26 +264,27 @@
         </button>
       </div>
 
-      <div class="relative p-6 overflow-auto flex flex-col items-center justify-center min-h-[300px]">
-        <div v-if="imageLoading || videoLoading" class="absolute flex flex-col items-center justify-center z-20">
+      <div class="relative p-1 lg:p-6 flex-1 min-h-0 overflow-auto flex flex-col items-center justify-center xmin-h-[300px]">
+        <div v-if="mediaLoading" class="absolute flex flex-col items-center justify-center z-20">
           <div>Loading...</div>
         </div>
-
-        <template v-if="isViewableImage(viewFile)">
-          <img :src="getFileUrl(viewFile)" class="max-w-full max-h-[70vh] transition-opacity duration-300" :class="imageLoading ? 'opacity-0' : 'opacity-100'" @load="onImageLoad">
+        <template v-if="!mediaLoadError">
+          <template v-if="isViewableImage(viewFile)">
+            <img :src="getFileUrl(viewFile)" class="max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300" :class="mediaLoading ? 'opacity-0' : 'opacity-100'" @load="onImageLoad">
+          </template>
+          
+          <template v-else-if="isViewableVideo(viewFile)">
+            <video 
+              ref="video" 
+              controls 
+              :src="getFileUrl(viewFile)" 
+              class="max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300"
+              :class="mediaLoading ? 'opacity-0' : 'opacity-100'"
+              @loadeddata="onVideoLoad"
+              @error="onVideoLoadError"
+            ></video>
+          </template>
         </template>
-        
-        <template v-else-if="isViewableVideo(viewFile)">
-          <video 
-            ref="video" 
-            controls 
-            :src="getFileUrl(viewFile)" 
-            class="max-w-full max-h-[70vh] transition-opacity duration-300"
-            :class="videoLoading ? 'opacity-0' : 'opacity-100'"
-            @loadeddata="onVideoLoad"
-          ></video>
-        </template>
-
         <div v-else class="text-center py-12">
           <div class="bg-gray-200 p-6 rounded-full inline-block mb-4">
             <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-width="2"></path></svg>

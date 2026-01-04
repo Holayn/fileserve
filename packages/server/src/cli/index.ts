@@ -7,7 +7,13 @@ import {
   getShareByReference,
   getShareById,
   updateSharePassword,
+  getShareFiles,
 } from '../repositories/share-repository.js';
+import { isFileNeedsPreview, getFilePreviewPath } from '../util/file.js';
+import { generatePreview } from '../services/preview-generator.js';
+import fs from 'fs-extra';
+import ora from 'ora';
+import boxen from 'boxen';
 
 await yargs(hideBin(process.argv))
   .command(
@@ -106,12 +112,16 @@ await yargs(hideBin(process.argv))
         const fileName = argv.name || basename(filePath);
 
         // Add file to share
-        const fileRecord = await addFileToShare(share.id, filePath, fileName);
+        const { record, needsPreview } = await addFileToShare(share.id, filePath, fileName);
 
         console.log(`File added successfully!`);
         console.log(`Share: ${share.name} (${share.reference})`);
         console.log(`File: ${fileName}`);
-        console.log(`File Reference: ${fileRecord.reference}`);
+        console.log(`File Reference: ${record.reference}`);
+
+        if (needsPreview) {
+          console.log(boxen('Warning: file needs preview generation! Run the `generate-previews` command to generate previews.', { padding: 1, borderColor: 'yellow' }));
+        }
       } catch (error: any) {
         if (error instanceof Error) {
           console.error(error);
@@ -188,7 +198,81 @@ await yargs(hideBin(process.argv))
       }
     },
   )
+  .command(
+    'generate-previews',
+    'Generate previews for files that need them',
+    (yargs) => {
+      return yargs
+        .option('share-reference', {
+          alias: 'r',
+          describe: 'Reference of the share',
+          type: 'string',
+        })
+        .option('share-id', {
+          alias: 'i',
+          describe: 'ID of the share',
+          type: 'string',
+        })
+    },
+    async (argv) => {
+      try {
+        if (!argv['share-reference'] && !argv['share-id']) {
+          console.error(
+            'Error: Either share reference (--share-reference/-r) or share ID (--share-id/-i) is required',
+          );
+          process.exit(1);
+        }
+
+        if (argv['share-reference'] && argv['share-id']) {
+          console.error(
+            'Error: Provide either share reference or share ID, not both',
+          );
+          process.exit(1);
+        }
+
+        // Check if share exists
+        const share = argv['share-reference']
+          ? getShareByReference(argv['share-reference'])
+          : getShareById(parseInt(argv['share-id']!));
+
+        if (!share) {
+          console.error('Error: Share not found');
+          process.exit(1);
+        }
+
+        console.log(`Generating previews for share: ${share.name} (${share.reference})`);
+
+        const files = await getShareFiles(share.id);
+
+        const spinner = ora().start();
+
+        for (const file of files) {
+          const needsPreview = await isFileNeedsPreview(file.filePath);
+          if (needsPreview) {
+            const previewPath = getFilePreviewPath(file.filePath);
+            if (fs.existsSync(previewPath)) {
+              continue;
+            }
+            spinner.text = `Generating preview for ${file.fileName}`;
+            try {
+              await generatePreview(file.filePath);
+            } catch (error) {
+              console.error(`Error generating preview for ${file.fileName}:`, error);
+              fs.unlinkSync(getFilePreviewPath(file.filePath));
+              process.exit(1);
+            }
+          }
+        }
+        
+        spinner.succeed('Previews generated successfully');
+      } catch (error) {
+        console.error('Error generating previews:', error);
+        process.exit(1);
+      }
+    },
+  )
   .demandCommand(1, 'You need to specify a command')
+  .strict()
   .help()
   .alias('help', 'h')
   .parse();
