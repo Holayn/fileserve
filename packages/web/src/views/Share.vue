@@ -125,21 +125,17 @@
         }
         return `/api/share/file/preview?reference=${file.reference}&share=${this.reference}`;
       },
-      isViewableImage(file: FileData) {
+      isImage(file: FileData) {
         return file.contentType.startsWith('image/');
       },
-      isViewableVideo(file: FileData) {
+      isVideo(file: FileData) {
         return file.contentType.includes('video/mp4');
       },
       async openPreview(file: FileData) {
         this.viewFile = file;
         this.mediaLoadError = false;
 
-        // Reset loading state for images
-        if (this.isViewableImage(file)) {
-          this.mediaLoading = true;
-        }
-        if (this.isViewableVideo(file)) {
+        if (this.isImage(file) || this.isVideo(file)) {
           this.mediaLoading = true;
         }
         
@@ -230,8 +226,14 @@
            class="w-full flex items-center px-6 py-2 hover:bg-gray-50 transition-colors text-left"
            @click="openPreview(file)"
         >
-          <div class="flex-shrink-0 mr-4">
-            <svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+          <div class="flex-shrink-0 mr-4 text-blue-500">
+            <div v-if="isImage(file)">
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg>
+            </div>
+            <div v-else-if="isVideo(file)">
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+            </div>
+            <svg v-else class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
             </svg>
           </div>
@@ -269,11 +271,11 @@
           <div>Loading...</div>
         </div>
         <template v-if="!mediaLoadError">
-          <template v-if="isViewableImage(viewFile)">
+          <template v-if="isImage(viewFile)">
             <img :src="getFileUrl(viewFile)" class="max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300" :class="mediaLoading ? 'opacity-0' : 'opacity-100'" @load="onImageLoad">
           </template>
           
-          <template v-else-if="isViewableVideo(viewFile)">
+          <template v-else-if="isVideo(viewFile)">
             <video 
               ref="video" 
               controls 
