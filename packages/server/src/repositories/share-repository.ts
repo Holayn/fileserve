@@ -3,9 +3,10 @@ import fs from 'fs-extra';
 import { ShareFile } from '../models/share-file.js';
 import { Share } from '../models/share.js';
 import { db } from '../config/database.js';
-import { posix } from 'path';
+import { posix, join, resolve } from 'path';
 import { generateHash } from '../util/security.js';
-import { isFileNeedsPreview, getFilePreviewPath } from '../util/file.js';
+import { isWebifyingNeeded } from '../services/webifier.js';
+import { FILES_PATH } from '../util/constants.js';
 
 interface ShareFileListResult {
   id: number;
@@ -39,15 +40,20 @@ export const addFileToShare = async (
   shareId: number,
   filePath: string,
   fileName: string,
-): Promise<{ record: { id: number; reference: string }; needsPreview: boolean }> => {
-  // Verify file exists and is accessible
+): Promise<{ record: { id: number; reference: string }; needsWebifying: boolean }> => {
+  const absolutePath = resolve(FILES_PATH, filePath);
+  
+  if (!absolutePath.startsWith(resolve(FILES_PATH))) {
+    throw {
+      message: `File ${absolutePath} is outside of directory ${FILES_PATH}`,
+      filePath,
+    };
+  }
+
   try {
-    const stats = await fs.lstat(filePath);
+    const stats = await fs.lstat(absolutePath);
+    await fs.access(absolutePath, fs.constants.R_OK);
     
-    // Check if file is readable
-    await fs.access(filePath, fs.constants.R_OK);
-    
-    // Check if file is not a directory
     if (!stats.isFile()) {
       throw {
         message: 'Path is a directory, not a file',
@@ -68,7 +74,7 @@ export const addFileToShare = async (
   );
   const result = stmt.run(
     shareId,
-    posix.normalize(filePath.replace(/\\/g, '/')),
+    posix.normalize(absolutePath.replace(`${FILES_PATH}/`, '').replace(/\\/g, '/')),
     fileName,
     reference,
   );
@@ -78,7 +84,7 @@ export const addFileToShare = async (
       id: result.lastInsertRowid as number,
       reference,
     },
-    needsPreview: await isFileNeedsPreview(filePath),
+    needsWebifying: await isWebifyingNeeded(absolutePath),
   };
 };
 

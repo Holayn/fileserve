@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Plyr from 'plyr';
-  import 'plyr/dist/plyr.css';
+  import videojs from 'video.js';
+  import 'video.js/dist/video-js.css';
 
   interface ShareData {
     name: string;
@@ -34,6 +34,7 @@
         viewFile: null as FileData | null,
         mediaLoading: false,
         mediaLoadError: false,
+        player: null as any,
       };
     },
     created() {
@@ -45,6 +46,9 @@
     },
     beforeDestroy() {
       document.title = originalTitle;
+      if (this.player) {
+        this.player.dispose();
+      }
     },
     methods: {
       async loadShare() {
@@ -123,7 +127,7 @@
         if (download) {
           return `/api/share/file?reference=${file.reference}&share=${this.reference}`;
         }
-        return `/api/share/file/preview?reference=${file.reference}&share=${this.reference}`;
+        return `/api/share/file/view?reference=${file.reference}&share=${this.reference}`;
       },
       isImage(file: FileData) {
         return file.contentType.startsWith('image/');
@@ -142,14 +146,35 @@
         const dialog = this.$refs.fileDialog as HTMLDialogElement;
         if (dialog) {
           dialog.showModal();
+          await this.$nextTick();
+          if (this.$refs.video && this.isVideo(this.viewFile)) {
+            // Fetch headers only to check what the server is sending
+            const videoUrl = this.getFileUrl(this.viewFile);
+            const response = await fetch(videoUrl, { method: 'HEAD' });
+            const contentType = response.headers.get('Content-Type');
 
-          if (this.$refs.video) {
-            const player = new Plyr(this.$refs.video as HTMLVideoElement, {
-              controls: ['play-large', 'play', 'progress', 'current-time', 'settings', 'fullscreen'],
+            let type = 'video/mp4';
+            if (contentType?.includes('mpegurl') || contentType?.includes('mpegURL')) {
+              type = 'application/x-mpegURL';
+            }
+
+            this.player = videojs(this.$refs.video as HTMLVideoElement, {
+              controls: true,
+              autoplay: true,
+              preload: 'auto',
+              responsive: true,
+              fluid: true,
+              sources: [
+                {
+                  src: videoUrl,
+                  type,
+                }
+              ]
             });
-            player.on('ready', () => {
+
+            this.player.ready(() => {
               this.mediaLoading = false;
-              player.play();
+              this.player.play();
             });
           }
         }
@@ -170,6 +195,10 @@
         this.mediaLoadError = true;
       },
       closePreview() {
+        if (this.player) {
+          this.player.dispose();
+          this.player = null;
+        }
         const dialog = this.$refs.fileDialog as HTMLDialogElement;
         if (dialog) {
           dialog.close();
@@ -238,12 +267,12 @@
             </svg>
           </div>
           <div class="flex-1 min-w-0">
-            <span class="text-blue-600 hover:text-blue-800 font-medium block break-words">
+            <span class="text-blue-600 font-medium block break-words">
               {{ file.fileName }}
             </span>
           </div>
           <div>
-            <a class="block border border-gray-200 dark:border-gray-600 rounded-full p-1 text-gray-500 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500" :href="`/api/share/file?reference=${file.reference}&share=${reference}&download=true`">
+            <a class="block border border-gray-200 dark:border-gray-600 rounded-full p-1 text-gray-500 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500" :href="`/api/share/file?reference=${file.reference}&share=${reference}&download=true`" @click.stop="">
               <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
             </a>
           </div>
@@ -278,10 +307,7 @@
           <template v-else-if="isVideo(viewFile)">
             <video 
               ref="video" 
-              controls 
-              :src="getFileUrl(viewFile)" 
-              class="max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300"
-              :class="mediaLoading ? 'opacity-0' : 'opacity-100'"
+              class="video-js vjs-default-skin h-full w-full max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300"
               @loadeddata="onVideoLoad"
               @error="onVideoLoadError"
             ></video>

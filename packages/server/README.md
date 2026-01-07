@@ -2,15 +2,17 @@
 
 ## Getting Started
 
-1.  Install dependencies:
-    ```bash
-    npm install
-    ```
-2.  Create a `.env` file from the `sample.env` file and fill in the required environment variables.
-3.  Start the server:
-    ```bash
-    npm run dev
-    ```
+Create a `.env` file from the `sample.env` file and fill in the required environment variables.
+
+Build the server:
+```bash
+npm run build
+```
+
+Start the server:
+```bash
+npm run start
+```
 
 ## CLI Usage
 
@@ -25,31 +27,21 @@ npm run cli create-share -- --name "My Share"
 ```
 
 #### Add a File to a Share
-Add a file to an existing share using either the share reference or ID:
+Add a file to a share using either the share reference or ID:
+Files must be inside the `<DATA_PATH>/files` directory.
 
-**Using share reference:**
 ```bash
-npm run cli add-file -- --share-reference abc123 --file-path ./path/to/file.txt
+npm run cli add-file -- --share-id 1 --file-path path/to/file.txt
 ```
 
-**Using share ID:**
+#### Webify
+Prepare web versions for files that need them in a share:
 ```bash
-npm run cli add-file -- --share-id 1 --file-path ./path/to/file.txt
-```
-
-**With custom filename:**
-```bash
-npm run cli add-file -- --share-reference abc123 --file-path ./path/to/file.txt --name "Custom Name"
-```
-
-#### Generate File Previews
-Generate previews for all files that need them in a share:
-```bash
-npm run cli generate-preview -- --share-id 1
+npm run cli webify -- --share-id 1
 ```
 
 #### Update Share Password
-Update or remove the password for an existing share:
+Update or remove the password for a share:
 
 **Set a new password:**
 ```bash
@@ -74,29 +66,23 @@ npm run cli update-password -- --share-id 1 --password "newpassword"
 | `create-share` | `--password` | `-p` | Password for the share | No |
 | `add-file` | `--share-reference` | `-r` | Reference of the share | Either this or `--share-id` |
 | `add-file` | `--share-id` | `-i` | ID of the share | Either this or `--share-reference` |
-| `add-file` | `--file-path` | `-f` | Path to the file to add | Yes |
+| `add-file` | `--file-path` | `-f` | Path to the file to add to the share (must be inside `<DATA_PATH>/files`) | Yes |
 | `add-file` | `--name` | `-n` | Custom name for the file | No |
-| `generate-preview` | `--share-reference` | `-r` | Reference of the share | Either this or `--share-id` |
-| `generate-preview` | `--share-id` | `-i` | ID of the share | Either this or `--share-reference` |
+| `webify` | `--share-reference` | `-r` | Reference of the share | Either this or `--share-id` |
+| `webify` | `--share-id` | `-i` | ID of the share | Either this or `--share-reference` |
 | `update-password` | `--share-reference` | `-r` | Reference of the share | Either this or `--share-id` |
 | `update-password` | `--share-id` | `-i` | ID of the share | Either this or `--share-reference` |
 | `update-password` | `--password` | `-p` | New password for the share | No |
 
 ### Examples
 
-1. **Create a share and add a file:**
+1. **Create a share and add file(s):**
    ```bash
    # Create share
-   npm run cli create-share -- -n "Documents"
+   npm run cli create-share -- -n "Pictures"
    
-   # Add file (using the reference from the output)
-   npm run cli add-file -- -r abc123 -f ./document.pdf
-   ```
-
-2. **Add multiple files with custom names:**
-   ```bash
-   npm run cli add-file -- -r abc123 -f ./report.pdf -n "Annual Report 2024"
-   npm run cli add-file -- -i 1 -f ./data.csv -n "Sales Data"
+   # Add file
+   npm run cli add-file -- -r abc123 -f my-cool-pic.jpg
    ```
 
 ## Configuration
@@ -105,8 +91,7 @@ npm run cli update-password -- --share-id 1 --password "newpassword"
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DB_PATH` | Path to where the database file will be stored | Required |
-| `PREVIEWS_PATH` | Path to where the previews will be stored | Required |
+| `DATA_PATH` | Absolute path to where the app data will be stored (database, files, etc) | Required |
 | `PORT` | Server port | 3000 |
 
 

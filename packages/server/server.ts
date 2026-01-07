@@ -4,13 +4,23 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import cron from 'node-cron';
 import { join } from 'path';
+import fs from 'fs-extra';
 
 import { getDirname } from './src/util/path.js';
 import logger from './src/util/logger.js';
 import routes from './src/routes/index.js';
-import { PORT } from './src/config/env.js';
+import { PORT, DATA_PATH } from './src/config/env.js';
+import { FILES_PATH } from './src/util/constants.js';
 import { nonceGenerator, cspDirectives } from './src/middleware/security.js';
 import { closeDatabase } from './src/config/database.js';
+
+// Create required directories
+if (!fs.existsSync(DATA_PATH)) {
+  fs.mkdirSync(DATA_PATH, { recursive: true });
+}
+if (!fs.existsSync(FILES_PATH)) {
+  fs.mkdirSync(FILES_PATH, { recursive: true });
+}
 
 const app: Application = express();
 

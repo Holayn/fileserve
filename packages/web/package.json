@@ -15,12 +15,13 @@
   },
   "dependencies": {
     "@types/vue-router": "^2.0.0",
-    "plyr": "^3.8.4",
+    "video.js": "^8.23.4",
     "vue": "^3.5.26"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.3",
     "@types/node": "^24.10.4",
+    "@types/video.js": "^7.3.58",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vue/tsconfig": "^0.8.1",
     "autoprefixer": "^10.4.23",

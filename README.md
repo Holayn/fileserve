@@ -18,6 +18,7 @@ Wanted to build an extremely simple and secure file sharing application myself.
 
 - Node.js >= 22.12.0
 - npm or yarn
+- nginx or other reverse proxy
 
 ### Installation
 
@@ -36,6 +37,12 @@ npm install
 ```bash
 cp packages/server/sample.env packages/server/.env
 ```
+
+## Usage
+
+- Files to share should be added to the `<DATA_PATH>/files` directory (see server README for more details)
+- Use the server CLI commands to create shares and add files to them
+- Configure nginx or other reverse proxy to serve up files in the `<DATA_PATH>/files` directory
 
 ## CLI Commands
 
