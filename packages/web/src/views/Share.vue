@@ -301,7 +301,13 @@
         </div>
         <template v-if="!mediaLoadError">
           <template v-if="isImage(viewFile)">
-            <img :src="getFileUrl(viewFile)" class="max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300" :class="mediaLoading ? 'opacity-0' : 'opacity-100'" @load="onImageLoad">
+            <img 
+              :src="getFileUrl(viewFile)" 
+              class="max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300" 
+              :class="mediaLoading ? 'opacity-0' : 'opacity-100'" 
+              @load="onImageLoad" 
+              @error="onImageLoadError"
+            >
           </template>
           
           <template v-else-if="isVideo(viewFile)">
