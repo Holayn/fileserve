@@ -41,7 +41,7 @@ export const addFileToShare = async (
   filePath: string,
   fileName: string,
 ): Promise<{ record: { id: number; reference: string }; needsWebifying: boolean }> => {
-  const absolutePath = resolve(FILES_PATH, filePath);
+  const absolutePath = resolve(filePath);
   
   if (!absolutePath.startsWith(resolve(FILES_PATH))) {
     throw {
@@ -74,7 +74,7 @@ export const addFileToShare = async (
   );
   const result = stmt.run(
     shareId,
-    posix.normalize(absolutePath.replace(`${FILES_PATH}/`, '').replace(/\\/g, '/')),
+    posix.normalize(absolutePath.replace(/\\/g, '/')),
     fileName,
     reference,
   );
