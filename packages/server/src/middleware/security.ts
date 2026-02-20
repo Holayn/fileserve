@@ -16,8 +16,8 @@ export const cspDirectives = {
   fontSrc: ["'self'", 'data:'],
   imgSrc: ['*'],
   objectSrc: ["'none'"],
-  scriptSrc: ["'self'"],
-  styleSrc: ["'self'"],
+  scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+  styleSrc: ["'self'", 'https://cdn.jsdelivr.net'],
   // blob: allows VideoJS blob workers
   workerSrc: ["'self'", 'blob:'],
 };
