@@ -10,7 +10,13 @@ export default defineConfig({
     sourcemap: true,
   },
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag.startsWith('sl-'),
+        },
+      },
+    }),
     vueDevTools(),
   ],
   resolve: {

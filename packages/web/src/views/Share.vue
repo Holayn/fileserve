@@ -143,9 +143,9 @@
           this.mediaLoading = true;
         }
         
-        const dialog = this.$refs.fileDialog as HTMLDialogElement;
+        const dialog = this.$refs.fileDialog as any;
         if (dialog) {
-          dialog.showModal();
+          dialog.show();
           await this.$nextTick();
           if (this.$refs.video && this.isVideo(this.viewFile)) {
             // Fetch headers only to check what the server is sending
@@ -200,21 +200,18 @@
         this.mediaLoadError = true;
       },
       closePreview() {
+        const dialog = this.$refs.fileDialog as any;
+        if (dialog) {
+          dialog.hide();
+        }
+      },
+      onDialogAfterHide() {
         if (this.player) {
           this.player.dispose();
           this.player = null;
         }
-        const dialog = this.$refs.fileDialog as HTMLDialogElement;
-        if (dialog) {
-          dialog.close();
-        }
         this.viewFile = null;
         this.mediaLoading = false;
-      },
-      handleBackdropClick(event: MouseEvent) {
-        if (event.target === this.$refs.fileDialog) {
-          this.closePreview();
-        }
       },
     }
   }
@@ -286,62 +283,60 @@
     </div>
   </div>
 
-  <dialog 
-    ref="fileDialog" 
-    class="backdrop:bg-black/75 w-fit min-w-[50vw] h-screen max-w-[calc(100vw-1rem)] md:max-w-[90vw] rounded-lg shadow-2xl p-0 dark:text-gray-200"
-    @close="viewFile = null"
-    @click="handleBackdropClick"
+  <sl-dialog
+    ref="fileDialog"
+    :label="viewFile ? viewFile.fileName : ''"
+    style="--width: 100%; --body-spacing: 0; --footer-spacing: 8px 0 16px 0;"
+    @sl-after-hide="onDialogAfterHide"
   >
-    <div v-if="viewFile" class="flex flex-col h-full">
-      <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 sticky top-0 z-10">
-        <h3 class="font-bold text-lg truncate dark:text-gray-200">{{ viewFile.fileName }}</h3>
-        <button @click="closePreview" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
-          <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        </button>
+    <div v-if="viewFile" class="relative p-1 lg:p-6 overflow-hidden flex flex-col items-center justify-center dark:bg-gray-800">
+      <div v-if="mediaLoading" class="absolute flex flex-col items-center justify-center z-20">
+        <div>Loading...</div>
       </div>
-
-      <div class="relative p-1 lg:p-6 flex-1 min-h-0 overflow-auto flex flex-col items-center justify-center dark:bg-gray-800">
-        <div v-if="mediaLoading" class="absolute flex flex-col items-center justify-center z-20">
-          <div>Loading...</div>
-        </div>
-        <template v-if="!mediaLoadError">
-          <template v-if="isImage(viewFile)">
-            <img 
-              :src="getFileUrl(viewFile)" 
-              class="max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300" 
-              :class="mediaLoading ? 'opacity-0' : 'opacity-100'" 
-              @load="onImageLoad" 
-              @error="onImageLoadError"
-            >
-          </template>
-          
-          <template v-else-if="isVideo(viewFile)">
-            <video 
-              ref="video" 
-              class="video-js vjs-default-skin h-full w-full max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300"
-              @loadeddata="onVideoLoad"
-              @error="onVideoLoadError"
-            ></video>
-          </template>
+      <template v-if="!mediaLoadError">
+        <template v-if="isImage(viewFile)">
+          <img 
+            :src="getFileUrl(viewFile)" 
+            class="max-w-full object-contain rounded-sm transition-opacity duration-300" 
+            style="max-height: calc(90dvh - 16rem);"
+            :class="mediaLoading ? 'opacity-0' : 'opacity-100'" 
+            @load="onImageLoad" 
+            @error="onImageLoadError"
+          >
         </template>
-        <div v-else class="text-center py-12">
-          <div class="bg-gray-200 p-6 rounded-full inline-block mb-4">
-            <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-width="2"></path></svg>
-          </div>
-          <p class="text-gray-600 font-medium">No preview available</p>
+        
+        <template v-else-if="isVideo(viewFile)">
+          <video 
+            ref="video" 
+            class="video-js vjs-default-skin h-full w-full max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300"
+            style="max-height: calc(90dvh - 16rem);"
+            @loadeddata="onVideoLoad"
+            @error="onVideoLoadError"
+          ></video>
+        </template>
+      </template>
+      <div v-else class="text-center py-12">
+        <div class="bg-gray-200 p-6 rounded-full inline-block mb-4">
+          <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-width="2"></path></svg>
         </div>
-      </div>
-
-      <div class="p-4 border-t dark:border-gray-700 flex justify-center gap-3 bg-white dark:bg-gray-800">
-        <a :href="getFileUrl(viewFile, true)" 
-            class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium flex items-center gap-2">
-          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
-          Download
-        </a>
+        <p class="text-gray-600 font-medium">No preview available</p>
       </div>
     </div>
-  </dialog>
+
+    <div v-if="viewFile" slot="footer" class="flex justify-center gap-3">
+      <a :href="getFileUrl(viewFile, true)"
+          class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium flex items-center gap-2">
+        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
+        Download
+      </a>
+    </div>
+  </sl-dialog>
 </template>
 
-<style scoped>
+<style>
+  @media (prefers-color-scheme: dark) {
+    sl-dialog {
+      --sl-panel-background-color: #1f2937;
+    }
+  }
 </style>
