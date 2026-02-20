@@ -109,15 +109,16 @@ router.get(
     }
 
     let filePath: string;
-    try {
-      const fileInfo = await getFileInfo(shareFile.absPath);
-      filePath = fileInfo.path;
-      if (!fileInfo.isFile) {
-        return res.status(404).json({ error: 'File not found' });
-      }
-    } catch (error) {
-      return res.status(404).json({ error: 'File not found' });
-    }
+    // try {
+      filePath = shareFile.absPath;
+      // const fileInfo = await getFileInfo(shareFile.absPath);
+      // filePath = fileInfo.path;
+      // if (!fileInfo.isFile) {
+      //   return res.status(404).json({ error: 'File not found' });
+      // }
+    // } catch (error) {
+    //   return res.status(404).json({ error: 'File not found' });
+    // }
 
     // Set appropriate headers
     const contentType = getContentType(shareFile.filePath);
@@ -178,15 +179,16 @@ router.get(
         filePath = shareFile.videoOptimizedPath;
       }
     } else if (shareFile.isImage()) {
-      try {
-        const fileInfo = await getFileInfo(shareFile.absPath);
-        filePath = fileInfo.path;
-        if (!fileInfo.isFile) {
-          return res.status(404).json({ error: 'File preview unavailable' });
-        }
-      } catch (error) {
-        return res.status(404).json({ error: 'File preview unavailable' });
-      }
+      // try {
+        filePath = shareFile.absPath;
+        // const fileInfo = await getFileInfo(shareFile.absPath);
+        // filePath = fileInfo.path;
+        // if (!fileInfo.isFile) {
+        //   return res.status(404).json({ error: 'File preview unavailable' });
+        // }
+      // } catch (error) {
+      //   return res.status(404).json({ error: 'File preview unavailable' });
+      // }
     } else {
       return res.status(404).json({ error: 'File preview unavailable' });
     }
