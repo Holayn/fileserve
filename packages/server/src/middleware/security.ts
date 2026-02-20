@@ -12,8 +12,12 @@ export const nonceGenerator = (
 
 export const cspDirectives = {
   defaultSrc: ["'self'"],
+  // data: allows VideoJS base64-encoded WOFF fonts
+  fontSrc: ["'self'", 'data:'],
   imgSrc: ['*'],
   objectSrc: ["'none'"],
   scriptSrc: ["'self'"],
   styleSrc: ["'self'"],
+  // blob: allows VideoJS blob workers
+  workerSrc: ["'self'", 'blob:'],
 };

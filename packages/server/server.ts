@@ -43,11 +43,8 @@ app.use(
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           (req, res) => `'nonce-${(res as any).locals.nonce}'`,
         ],
-        styleSrc: [
-          ...cspDirectives.styleSrc,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          (req, res) => `'nonce-${(res as any).locals.nonce}'`,
-        ],
+        // unsafe-inline is needed to allow for VideoJS inline styles.
+        styleSrc: [...cspDirectives.styleSrc, "'unsafe-inline'"],
       },
     },
   }),
