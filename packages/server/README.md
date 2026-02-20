@@ -91,19 +91,16 @@ npm run cli update-password -- --share-id 1 --password "newpassword"
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATA_PATH` | Absolute path to where the app data will be stored (database, files, etc) | Required |
-| `PORT` | Server port | 3000 |
-
+| `DATA_PATH` | Absolute path where app data is stored (database, files, etc.) | Required |
+| `PORT` | Server port | `3000` |
+| `NOTIFY_SERVICE_URL` | Webhook URL for sending notifications | Optional |
+| `NOTIFY_SERVICE_USER` | Default user identifier sent with notifications | Optional |
 
 ## Linting
 
-This project uses ESLint and Prettier for linting and formatting.
+This project uses ESLint for linting.
 
--   To run the linter, use:
-    ```bash
-    npm run lint
-    ```
--   To fix linting errors, use:
-    ```bash
-    npm run lint:fix
-    ```
+```bash
+npm run lint
+npm run lint:fix
+```

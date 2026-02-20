@@ -1,12 +1,16 @@
 # FileServe
 
-A very simple and modern file sharing application, built with Node.js, Express, Vue.js, and TypeScript. FileServe allows users to create secure shares with unique references and download files through an elegant web interface.
+A simple and modern file sharing application built with Node.js, Express, Vue.js, and TypeScript. FileServe lets you create secure shares with unique references and serve files through a clean web interface.
 
 ## Features
 
-- Create secure shares with unique references
+- Create named shares with unique references
+- Optional password protection per share
 - Resumable file downloads
-- Viewable files are displayed inline
+- Inline viewing for supported file types
+- Video streaming and optimized playback via ffmpeg
+- CLI tool for managing shares and files
+- Optional notification webhook integration
 
 ## Motivation
 
@@ -17,8 +21,9 @@ Wanted to build an extremely simple and secure file sharing application myself.
 ### Prerequisites
 
 - Node.js >= 22.12.0
-- npm or yarn
+- npm
 - nginx or other reverse proxy
+- ffmpeg (required for video webifying)
 
 ### Installation
 
@@ -38,24 +43,28 @@ npm install
 cp packages/server/sample.env packages/server/.env
 ```
 
+4. Edit `packages/server/.env` and set the required variables (see [server README](packages/server/README.md) for details).
+
 ## Usage
 
-- Files to share should be added to the `<DATA_PATH>/files` directory (see server README for more details)
-- Use the server CLI commands to create shares and add files to them
-- Configure nginx or other reverse proxy to serve up files in the `<DATA_PATH>/files` directory. There should be a location block for the `/files` path.
+- Place files to share inside the `<DATA_PATH>/files` directory
+- Use the CLI to create shares and add files to them
+- Configure nginx (or another reverse proxy) to serve files at the `/files` path from `<DATA_PATH>/files`
 
-## CLI Commands
+## CLI
 
-The server package includes a CLI tool for managing shares:
+The server package includes a CLI for managing shares:
 
 ```bash
 cd packages/server
 npm run cli -- --help
 ```
 
+See the [server README](packages/server/README.md) for full CLI documentation.
+
 ## Development
 
-1. Start the server in development mode:
+1. Start the server:
 ```bash
 cd packages/server
 npm run dev
@@ -81,7 +90,7 @@ cd packages/server
 npm run build
 ```
 
-3. Start the production server:
+3. Start the server:
 ```bash
 cd packages/server
 npm start
