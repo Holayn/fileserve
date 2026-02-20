@@ -289,7 +289,7 @@
     style="--width: 100%; --body-spacing: 0; --footer-spacing: 8px 0 16px 0;"
     @sl-after-hide="onDialogAfterHide"
   >
-    <div v-if="viewFile" class="relative p-1 lg:p-6 overflow-hidden flex flex-col items-center justify-center dark:bg-gray-800">
+    <div v-if="viewFile" class="relative p-1 lg:p-6 overflow-hidden flex flex-col items-center justify-center dark:bg-gray-800 min-h-6">
       <div v-if="mediaLoading" class="absolute flex flex-col items-center justify-center z-20">
         <div>Loading...</div>
       </div>
