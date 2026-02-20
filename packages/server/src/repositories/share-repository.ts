@@ -51,7 +51,7 @@ export const addFileToShare = async (
   }
 
   try {
-    const stats = await fs.lstat(absolutePath);
+    const stats = await fs.stat(absolutePath);
     await fs.access(absolutePath, fs.constants.R_OK);
     
     if (!stats.isFile()) {
