@@ -9,9 +9,10 @@ import { asyncHandler } from '../util/route.js';
 import logger from '../util/logger.js';
 import send from 'send';
 import { authShare } from '../middleware/auth.js';
-import { getVideoStreamPath, getContentType, isVideo, isImage, getVideoOptimizedPath } from '../util/file.js';
+import { getContentType } from '../util/file.js';
 import { isFileWebViewAvailable, isVideoNeedStreamingConversion } from '../services/webifier.js';
 import path from 'path';
+import { DATA_PATH } from '../config/env.js';
 
 const router = Router();
 
@@ -93,7 +94,6 @@ router.get(
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    // Get file info and validate share reference
     const shareFile = getShareFileByReference(reference);
     if (!shareFile) {
       return res.status(404).json({ error: 'File not found' });
@@ -104,14 +104,13 @@ router.get(
       return res.status(404).json({ error: 'Share not found' });
     }
 
-    // Validate that the share reference matches
-    if (share.reference !== shareReference) {
+    if (shareFile.shareId !== share.id) {
       return res.status(403).json({ error: 'Invalid share reference' });
     }
 
     let filePath: string;
     try {
-      const fileInfo = await getFileInfo(shareFile.filePath);
+      const fileInfo = await getFileInfo(shareFile.absPath);
       filePath = fileInfo.path;
       if (!fileInfo.isFile) {
         return res.status(404).json({ error: 'File not found' });
@@ -152,7 +151,6 @@ router.get(
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    // Get file info and validate share reference
     const shareFile = getShareFileByReference(reference);
     if (!shareFile) {
       return res.status(404).json({ error: 'File not found' });
@@ -163,8 +161,7 @@ router.get(
       return res.status(404).json({ error: 'Share not found' });
     }
 
-    // Validate that the share reference matches
-    if (share.reference !== shareReference) {
+    if (shareFile.shareId !== share.id) {
       return res.status(403).json({ error: 'Invalid share reference' });
     }
 
@@ -174,15 +171,15 @@ router.get(
 
     let filePath: string;
 
-    if (isVideo(shareFile.filePath)) {
+    if (shareFile.isVideo()) {
       if (await isVideoNeedStreamingConversion(shareFile)) {
         return res.redirect(`/api/share/hls/${shareReference}/${reference}/playlist.m3u8`);
       } else {
-        filePath = getVideoOptimizedPath(shareFile);
+        filePath = shareFile.videoOptimizedPath;
       }
-    } else if (isImage(shareFile.filePath)) {
+    } else if (shareFile.isImage()) {
       try {
-        const fileInfo = await getFileInfo(shareFile.filePath);
+        const fileInfo = await getFileInfo(shareFile.absPath);
         filePath = fileInfo.path;
         if (!fileInfo.isFile) {
           return res.status(404).json({ error: 'File preview unavailable' });
@@ -214,14 +211,23 @@ router.get(
     (req, res) => res.status(401).json({ error: 'Unauthorized' })
   ),
   asyncHandler(async (req: Request, res: Response) => {
-    const { reference, filename } = req.params;
+    const { share: shareReference, reference, filename } = req.params;
 
     const shareFile = getShareFileByReference(reference);
     if (!shareFile) {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    const hlsDirectory = getVideoStreamPath(shareFile);
+    const share = getShareByReference(shareReference);
+    if (!share) {
+      return res.status(404).json({ error: 'Share not found' });
+    }
+
+    if (shareFile.shareId !== share.id) {
+      return res.status(403).json({ error: 'Invalid share reference' });
+    }
+
+    const hlsDirectory = shareFile.videoStreamPath;
     const filePath = path.join(hlsDirectory, filename);
 
     // Prevent directory traversal attacks
@@ -242,8 +248,8 @@ router.get(
 
 function sendFile(filePath: string, req: Request, res: Response) {
   if (process.env.ENV !== 'development') {
-    const relativePath = filePath.replace(process.env.DATA_PATH || '', '');
-    res.setHeader('X-Accel-Redirect', `/files${relativePath}`);
+    console.log(`X-Accel-Redirect: /files${filePath.replace(DATA_PATH, '')}`);
+    res.setHeader('X-Accel-Redirect', `/files${filePath.replace(DATA_PATH, '')}`);
     res.end();
   } else {
     send(req, filePath)

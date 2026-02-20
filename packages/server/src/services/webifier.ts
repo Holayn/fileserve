@@ -1,20 +1,22 @@
 import { Share } from "../models/share.js";
 import { getShareFiles } from "../repositories/share-repository.js";
-import { getVideoStreamPath, isVideo, getContentType, getVideoOptimizedPath } from "../util/file.js";
+import { getContentType } from "../util/file.js";
 import fs from 'fs-extra';
 import path from 'path';
 import { execa } from 'execa';
-import { isImage } from "../util/file.js";
 import { ShareFile } from "../models/share-file.js";
+
+const CONVERSION_TYPE_VIDEO_STREAM = 'stream';
+const CONVERSION_TYPE_VIDEO_OPTIMIZED = 'optimized';
 
 export async function webifyShare(share: Share, updateProgress: (message: string) => void) {
   const files = await getShareFiles(share.id);
 
   for (const file of files) {
-    if (isVideo(file.filePath)) {
+    if (file.isVideo()) {
       const conversionType = await determineVideoConversionType(file);
-      if (conversionType === 'stream') {
-        const streamPath = getVideoStreamPath(file);
+      if (conversionType === CONVERSION_TYPE_VIDEO_STREAM) {
+        const streamPath = file.videoStreamPath;
         if (await fs.exists(streamPath)) {
           continue;
         }
@@ -28,8 +30,8 @@ export async function webifyShare(share: Share, updateProgress: (message: string
           await fs.unlink(streamPath);
           process.exit(1);
         }
-      } else if (conversionType === 'optimized') {
-        const optimizedPath = getVideoOptimizedPath(file);
+      } else if (conversionType === CONVERSION_TYPE_VIDEO_OPTIMIZED) {
+        const optimizedPath = file.videoOptimizedPath;
         if (await fs.exists(optimizedPath)) {
           continue;
         }
@@ -51,7 +53,7 @@ export async function webifyShare(share: Share, updateProgress: (message: string
 }
 
 export async function isWebifyingNeeded(filePath: string): Promise<boolean> {
-  if (isVideo(filePath)) {
+  if (getContentType(filePath).startsWith('video')) {
     return true;
   }
 
@@ -60,39 +62,37 @@ export async function isWebifyingNeeded(filePath: string): Promise<boolean> {
 
 
 export async function isFileWebViewAvailable(file: ShareFile): Promise<boolean> {
-  if (isVideo(file.filePath)) {
+  if (file.isVideo()) {
     if (await isVideoNeedStreamingConversion(file)) {
-      return await fs.exists(getVideoStreamPath(file));
+      return await fs.exists(file.videoStreamPath);
     }
-    return await fs.exists(getVideoOptimizedPath(file));
-  } else if (isImage(file.filePath)) {
-    return isImage(file.filePath, ['.png', '.jpg', '.jpeg', '.gif', '.webp']) && await fs.exists(file.filePath);
+    return await fs.exists(file.videoOptimizedPath);
+  } else if (file.isImage()) {
+    return ['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(path.extname(file.filePath).toLowerCase())
   }
 
   return false;
 }
 
-async function determineVideoConversionType(file: ShareFile): Promise<'stream' | 'optimized'> {
-  if (isVideo(file.filePath)) {
+async function determineVideoConversionType(file: ShareFile): Promise<typeof CONVERSION_TYPE_VIDEO_STREAM | typeof CONVERSION_TYPE_VIDEO_OPTIMIZED> {
+  if (file.isVideo()) {
     if (await isVideoNeedStreamingConversion(file)) {
-      return 'stream';
+      return CONVERSION_TYPE_VIDEO_STREAM;
     }
-    return 'optimized';
+    return CONVERSION_TYPE_VIDEO_OPTIMIZED;
   }
 
   throw new Error('File is not a video');
 }
 
 export async function isVideoNeedStreamingConversion(file: ShareFile): Promise<boolean> {
-  const contentType = getContentType(file.filePath);
-
-  if (contentType.startsWith('video/')) {
+  if (file.isVideo()) {
     const { stdout } = await execa('ffprobe', [
       '-v', 'error',
       '-select_streams', 'v:0',
       '-show_entries', 'format=duration,bit_rate',
       '-of', 'json',
-      file.filePath,
+      file.absPath,
     ]);
 
     const metadata = JSON.parse(stdout);
@@ -103,23 +103,21 @@ export async function isVideoNeedStreamingConversion(file: ShareFile): Promise<b
     const DURATION_THRESHOLD = 60; // 1 minute
     const BITRATE_THRESHOLD = 6000000; // 6 Mbps
 
-    if (duration > DURATION_THRESHOLD || bitRate > BITRATE_THRESHOLD) {
-      return true
-    }
+    return duration > DURATION_THRESHOLD || bitRate > BITRATE_THRESHOLD;
   }
 
   throw new Error('File is not a video');
 }
 
 async function generateVideoStream(file: ShareFile) {
-  const outputDir = getVideoStreamPath(file);
+  const outputDir = file.videoStreamPath;
 
   if (!await fs.exists(outputDir)) {
     await fs.mkdir(outputDir);
   }
 
   await execa('ffmpeg', [
-    '-i', file.filePath,
+    '-i', file.absPath,
     // This ensures we never upscale, only downscale or stay the same size
     '-vf', 'scale=w=\'min(1920,iw)\':h=-2',
     '-c:v', 'libx264',
@@ -136,14 +134,14 @@ async function generateVideoStream(file: ShareFile) {
 }
 
 async function generateOptimizedVideo(file: ShareFile) {
-  const output = getVideoOptimizedPath(file);
+  const output = file.videoOptimizedPath;
 
   if (!await fs.exists(path.dirname(output))) {
     await fs.mkdir(path.dirname(output));
   }
 
   await execa('ffmpeg', [
-    '-i', file.filePath,
+    '-i', file.absPath,
     // This ensures we never upscale, only downscale or stay the same size
     '-vf', 'scale=w=\'min(1920,iw)\':h=-2',
     '-c:v', 'libx264',

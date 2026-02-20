@@ -42,7 +42,7 @@ cp packages/server/sample.env packages/server/.env
 
 - Files to share should be added to the `<DATA_PATH>/files` directory (see server README for more details)
 - Use the server CLI commands to create shares and add files to them
-- Configure nginx or other reverse proxy to serve up files in the `<DATA_PATH>/files` directory
+- Configure nginx or other reverse proxy to serve up files in the `<DATA_PATH>/files` directory. There should be a location block for the `/files` path.
 
 ## CLI Commands
 

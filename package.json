@@ -6,9 +6,6 @@
     "packages/*"
   ],
   "main": "index.js",
-  "devDependencies": {
-    "tailwindcss": "^4.1.18"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC"

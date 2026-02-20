@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import { ShareFile } from '../models/share-file.js';
 import { Share } from '../models/share.js';
 import { db } from '../config/database.js';
-import { posix, join, resolve } from 'path';
+import { posix, resolve } from 'path';
 import { generateHash } from '../util/security.js';
 import { isWebifyingNeeded } from '../services/webifier.js';
 import { FILES_PATH } from '../util/constants.js';
@@ -74,7 +74,7 @@ export const addFileToShare = async (
   );
   const result = stmt.run(
     shareId,
-    posix.normalize(absolutePath.replace(/\\/g, '/')),
+    posix.normalize(absolutePath.replace(/\\/g, '/').slice(`${FILES_PATH}/`.length)),
     fileName,
     reference,
   );

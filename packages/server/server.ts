@@ -10,7 +10,7 @@ import { getDirname } from './src/util/path.js';
 import logger from './src/util/logger.js';
 import routes from './src/routes/index.js';
 import { PORT, DATA_PATH } from './src/config/env.js';
-import { FILES_PATH } from './src/util/constants.js';
+import { FILES_PATH, STREAMS_PATH, WEB_OPTIMIZED_PATH } from './src/util/constants.js';
 import { nonceGenerator, cspDirectives } from './src/middleware/security.js';
 import { closeDatabase } from './src/config/database.js';
 
@@ -20,6 +20,12 @@ if (!fs.existsSync(DATA_PATH)) {
 }
 if (!fs.existsSync(FILES_PATH)) {
   fs.mkdirSync(FILES_PATH, { recursive: true });
+}
+if (!fs.existsSync(STREAMS_PATH)) {
+  fs.mkdirSync(STREAMS_PATH, { recursive: true });
+}
+if (!fs.existsSync(WEB_OPTIMIZED_PATH)) {
+  fs.mkdirSync(WEB_OPTIMIZED_PATH, { recursive: true });
 }
 
 const app: Application = express();
