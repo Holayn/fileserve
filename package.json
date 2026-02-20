@@ -5,6 +5,9 @@
   "workspaces": [
     "packages/*"
   ],
+  "scripts": {
+    "build": "npm run build --workspaces"
+  },
   "main": "index.js",
   "keywords": [],
   "author": "",
