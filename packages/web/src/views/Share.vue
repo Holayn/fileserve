@@ -173,8 +173,13 @@
             });
 
             this.player.ready(() => {
-              this.mediaLoading = false;
-              this.player.play();
+              this.player.one('canplay', () => {
+                this.mediaLoading = false;
+              });
+              this.player.one('error', () => {
+                this.mediaLoading = false;
+                this.mediaLoadError = true;
+              });
             });
           }
         }
