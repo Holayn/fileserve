@@ -4,7 +4,6 @@ import {
   getShareFiles,
   getShareFileByReference,
 } from '../repositories/share-repository.js';
-import { getFileInfo } from '../util/fs.js';
 import { asyncHandler } from '../util/route.js';
 import logger from '../util/logger.js';
 import send from 'send';
@@ -108,19 +107,10 @@ router.get(
       return res.status(403).json({ error: 'Invalid share reference' });
     }
 
-    let filePath: string;
-    try {
-      const fileInfo = await getFileInfo(shareFile.absPath);
-      filePath = fileInfo.path;
-      if (!fileInfo.isFile) {
-        return res.status(404).json({ error: 'File not found' });
-      }
-    } catch (error) {
-      return res.status(404).json({ error: 'File not found' });
-    }
+    const filePath = shareFile.absPath;
 
     // Set appropriate headers
-    const contentType = getContentType(shareFile.filePath);
+    const contentType = getContentType(filePath);
     const disposition = 'attachment';
 
     res.setHeader(
@@ -178,15 +168,7 @@ router.get(
         filePath = shareFile.videoOptimizedPath;
       }
     } else if (shareFile.isImage()) {
-      try {
-        const fileInfo = await getFileInfo(shareFile.absPath);
-        filePath = fileInfo.path;
-        if (!fileInfo.isFile) {
-          return res.status(404).json({ error: 'File preview unavailable' });
-        }
-      } catch (error) {
-        return res.status(404).json({ error: 'File preview unavailable' });
-      }
+      filePath = shareFile.absPath;
     } else {
       return res.status(404).json({ error: 'File preview unavailable' });
     }
