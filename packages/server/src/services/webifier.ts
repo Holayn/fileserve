@@ -123,7 +123,8 @@ async function generateVideoStream(file: ShareFile) {
     '-c:v', 'libx264',
     '-crf', '23',
     '-preset', 'medium',
-    '-c:a', 'copy',
+    '-c:a', 'aac',               // Transcode audio to AAC for HLS/browser compatibility
+    '-b:a', '128k',
     '-f', 'hls',                 // Force HLS format
     '-hls_time', '6',            // 6-second segments
     '-hls_playlist_type', 'vod', // Tells the player this is not a "live" stream
