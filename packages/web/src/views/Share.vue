@@ -133,7 +133,7 @@
         return file.contentType.startsWith('image/');
       },
       isVideo(file: FileData) {
-        return file.contentType.includes('video/mp4');
+        return file.contentType.includes('video/');
       },
       async openPreview(file: FileData) {
         this.viewFile = file;
