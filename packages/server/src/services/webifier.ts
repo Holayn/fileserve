@@ -118,8 +118,8 @@ async function generateVideoStream(file: ShareFile) {
 
   await execa('ffmpeg', [
     '-i', file.absPath,
-    // This ensures we never upscale, only downscale or stay the same size
-    '-vf', 'scale=w=\'min(1920,iw)\':h=-2',
+    // Cap height at 1080p and width at 1920p while preserving aspect ratio without re-encoding videos that are already 1080p or lower.
+    '-vf', "scale=w='min(iw,1920)':h='min(ih,1080)':force_original_aspect_ratio=decrease,format=yuv420p",
     '-c:v', 'libx264',
     '-crf', '23',
     '-preset', 'medium',
@@ -143,12 +143,12 @@ async function generateOptimizedVideo(file: ShareFile) {
 
   await execa('ffmpeg', [
     '-i', file.absPath,
-    // This ensures we never upscale, only downscale or stay the same size
-    '-vf', 'scale=w=\'min(1920,iw)\':h=-2',
+    '-vf', "scale='if(gt(iw,ih),1920,-2)':'if(gt(iw,ih),-2,1920)',format=yuv420p",
     '-c:v', 'libx264',
     '-crf', '23',
     '-preset', 'medium',
-    '-c:a', 'copy',
+    '-c:a', 'aac',
+    '-b:a', '128k',
     '-movflags', '+faststart',
     '-y',
     output,
