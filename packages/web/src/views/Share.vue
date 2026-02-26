@@ -163,7 +163,7 @@
               autoplay: true,
               preload: 'auto',
               responsive: true,
-              fluid: true,
+              fill: true,
               sources: [
                 {
                   src: videoUrl,
@@ -306,13 +306,14 @@
         </template>
         
         <template v-else-if="isVideo(viewFile)">
-          <video 
-            ref="video" 
-            class="video-js vjs-default-skin h-full w-full max-w-full max-h-full object-contain rounded-sm transition-opacity duration-300"
-            style="max-height: calc(90dvh - 16rem);"
-            @loadeddata="onVideoLoad"
-            @error="onVideoLoadError"
-          ></video>
+          <div class="video-container">
+            <video 
+              ref="video" 
+              class="video-js vjs-default-skin rounded-sm transition-opacity duration-300"
+              @loadeddata="onVideoLoad"
+              @error="onVideoLoadError"
+            ></video>
+          </div>
         </template>
       </template>
       <div v-else class="text-center py-12">
@@ -338,5 +339,16 @@
     sl-dialog {
       --sl-panel-background-color: #1f2937;
     }
+  }
+
+  .video-container {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: calc(90dvh - 16rem);
+  }
+
+  .video-container .video-js {
+    width: 100%;
+    height: 100%;
   }
 </style>
