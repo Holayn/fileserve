@@ -17,6 +17,7 @@ export const cspDirectives = {
   // data: allows VideoJS base64-encoded WOFF fonts
   fontSrc: ["'self'", 'data:'],
   imgSrc: ['*'],
+  mediaSrc: ["'self'", 'blob:'],
   objectSrc: ["'none'"],
   scriptSrc: [
     "'self'",
