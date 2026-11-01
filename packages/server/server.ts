@@ -104,6 +104,12 @@ app.get('/health', (req: Request, res: Response) => {
 // --- Global Error Handler (Must be the last middleware) ---
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  // Client errors (malformed URLs, bad request bodies, etc.) carry a 4xx status; respond with it
+  // and don't treat it as a server failure. Morgan already records the request and status.
+  if (!res.headersSent && (err as any).status >= 400 && (err as any).status < 500) {
+    return res.sendStatus((err as any).status);
+  }
+
   logger.error(err);
   res.status(500).send('Internal Server Error');
 });
